@@ -44,6 +44,7 @@ option(NRI_ENABLE_NVTX_SUPPORT "Annotations for NVIDIA Nsight Systems" ON)
 option(NRI_ENABLE_DEBUG_NAMES_AND_ANNOTATIONS "Enable debug names, host and device annotations" ON)
 option(NRI_ENABLE_NONE_SUPPORT "Enable NONE backend" ON)
 option(NRI_ENABLE_VK_SUPPORT "Enable Vulkan backend" ON)
+option(NRI_ENABLE_WEBGPU_SUPPORT "Enable WebGPU backend" ON)
 option(NRI_ENABLE_VALIDATION_SUPPORT "Enable Validation backend (otherwise 'enableNRIValidation' is ignored)" ON)
 option(NRI_ENABLE_NIS_SDK "Enable NVIDIA Image Sharpening SDK" OFF)
 option(NRI_ENABLE_IMGUI_EXTENSION "Enable 'NRIImgui' extension" OFF)
@@ -141,6 +142,17 @@ if(NRI_ENABLE_NVTX_SUPPORT)
         URL https://github.com/NVIDIA/NVTX/archive/refs/tags/v3.4.0.zip
     )
     list(APPEND DEPS nvtx)
+endif()
+
+if(NRI_ENABLE_WEBGPU_SUPPORT)
+    # WebGPU headers
+    FetchContent_Declare(
+        webgpu_headers
+        GIT_REPOSITORY https://github.com/webgpu-native/webgpu-headers.git
+        GIT_TAG        main
+        SOURCE_SUBDIR "ignore CMakeLists.txt"
+    )
+    list(APPEND DEPS webgpu_headers)
 endif()
 
 if(NRI_ENABLE_VK_SUPPORT)
@@ -355,6 +367,7 @@ target_sources(NRI_Shared
     PRIVATE
         ${SHARED_SOURCE}
 )
+
 target_include_directories(NRI_Shared
     PUBLIC
         "Include"
@@ -365,6 +378,9 @@ target_include_directories(NRI_Shared
         >
         $<$<BOOL:${NRI_ENABLE_VK_SUPPORT}>:
             ${vulkan_headers_SOURCE_DIR}/include
+        >
+        $<$<BOOL:${NRI_ENABLE_WEBGPU_SUPPORT}>:
+            ${webgpu_headers_SOURCE_DIR}/include
         >
         $<$<BOOL:${NRI_ENABLE_NGX_SDK}>:
             ${ngx_SOURCE_DIR}/include
@@ -720,6 +736,60 @@ if(NRI_ENABLE_VK_SUPPORT)
     )
 endif()
 
+# WEBGPU
+if(NRI_ENABLE_WEBGPU_SUPPORT)
+    set(WEBGPU_SOURCE
+        "Source/WebGPU/BufferWebGPU.h"
+        "Source/WebGPU/BufferWebGPU.hpp"
+        "Source/WebGPU/CommandAllocatorWebGPU.h"
+        "Source/WebGPU/CommandAllocatorWebGPU.hpp"
+        "Source/WebGPU/CommandBufferWebGPU.h"
+        "Source/WebGPU/CommandBufferWebGPU.hpp"
+        "Source/WebGPU/DescriptorWebGPU.h"
+        "Source/WebGPU/DescriptorWebGPU.hpp"
+        "Source/WebGPU/DescriptorPoolWebGPU.h"
+        "Source/WebGPU/DescriptorPoolWebGPU.hpp"
+        "Source/WebGPU/DescriptorSetWebGPU.h"
+        "Source/WebGPU/DescriptorSetWebGPU.hpp"
+        "Source/WebGPU/DeviceWebGPU.h"
+        "Source/WebGPU/DeviceWebGPU.hpp"
+        "Source/WebGPU/FenceWebGPU.h"
+        "Source/WebGPU/FenceWebGPU.hpp"
+        "Source/WebGPU/ImplWebGPU.cpp"
+        "Source/WebGPU/MemoryWebGPU.h"
+        "Source/WebGPU/PipelineWebGPU.h"
+        "Source/WebGPU/PipelineWebGPU.hpp"
+        "Source/WebGPU/PipelineLayoutWebGPU.h"
+        "Source/WebGPU/PipelineLayoutWebGPU.hpp"
+        "Source/WebGPU/QueryPoolWebGPU.h"
+        "Source/WebGPU/QueryPoolWebGPU.hpp"
+        "Source/WebGPU/QueueWebGPU.h"
+        "Source/WebGPU/QueueWebGPU.hpp"
+        "Source/WebGPU/SharedWebGPU.h"
+        "Source/WebGPU/SharedWebGPU.hpp"
+        "Source/WebGPU/SwapChainWebGPU.h"
+        "Source/WebGPU/SwapChainWebGPU.hpp"
+        "Source/WebGPU/TextureWebGPU.h"
+        "Source/WebGPU/TextureWebGPU.hpp"
+        "Source/WebGPU/ImplWEBGPU.cpp"
+    )
+
+    add_library(NRI_WEBGPU STATIC)
+    target_sources(NRI_WEBGPU PRIVATE ${WEBGPU_SOURCE})
+    target_include_directories(NRI_WEBGPU
+        PRIVATE
+            "${webgpu_headers_SOURCE_DIR}/include"
+    )
+    target_link_libraries(NRI_WEBGPU
+        PRIVATE
+            NRI_Shared
+    )
+    set_target_properties(NRI_WEBGPU
+        PROPERTIES
+            FOLDER "NRI"
+    )
+endif()
+
 # Validation
 if(NRI_ENABLE_VALIDATION_SUPPORT)
     set(NRI_VALIDATION_SOURCE
@@ -893,6 +963,9 @@ target_link_libraries(NRI
         >
         $<$<BOOL:${NRI_ENABLE_VK_SUPPORT}>:
             NRI_VK
+        >
+        $<$<BOOL:${NRI_ENABLE_WEBGPU_SUPPORT}>:
+            NRI_WEBGPU
         >
         $<$<BOOL:${NRI_ENABLE_VALIDATION_SUPPORT}>:
             NRI_Validation
