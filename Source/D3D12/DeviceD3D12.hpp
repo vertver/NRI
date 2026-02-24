@@ -1062,6 +1062,128 @@ void DeviceD3D12::GetResourceDesc(const BufferDesc& bufferDesc, D3D12_RESOURCE_D
 #endif
 }
 
+static inline bool CanUseSmallAlignment(const D3D12_RESOURCE_DESC& desc, const FormatProps& formatProps) {
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc#alignment
+    // WTF, MS? You never explained the hidden logic behind "small alignment" assuming "GetResourceAllocationInfo" usage, which just
+    // throws a debug error, if a user wants to check the support. And the error is what we want to avoid! Thanks for the "chicken-egg" problem!
+
+    // Global restrictions
+    if (desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+        return false;
+
+    // Tile dims
+    uint32_t tW = 1;
+    uint32_t tH = 1;
+    uint32_t tD = 1;
+
+    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) {
+        // 3D standard swizzle (4KB tiles)
+        switch (formatProps.stride) {
+            case 1:
+                tW = 16;
+                tH = 16;
+                tD = 16;
+                break;
+            case 2:
+                tW = 16;
+                tH = 16;
+                tD = 8;
+                break;
+            case 4:
+                tW = 16;
+                tH = 8;
+                tD = 8;
+                break;
+            case 8:
+                tW = 8;
+                tH = 8;
+                tD = 8;
+                break;
+            case 16:
+                tW = 8;
+                tH = 8;
+                tD = 4;
+                break;
+            default:
+                return false;
+        }
+    } else if (desc.SampleDesc.Count > 1) {
+        // 2D MSAA standard swizzle (64KB tiles)
+        switch (formatProps.stride) {
+            case 1:
+                tW = 256;
+                tH = 256;
+                break;
+            case 2:
+                tW = 256;
+                tH = 128;
+                break;
+            case 4:
+                tW = 128;
+                tH = 128;
+                break;
+            case 8:
+                tW = 128;
+                tH = 64;
+                break;
+            case 16:
+                tW = 64;
+                tH = 64;
+                break;
+            default:
+                return false;
+        }
+    } else {
+        // 1D and 2D standard swizzle (4KB tiles)
+        if (formatProps.isCompressed) {
+            tW = formatProps.stride == 8 ? 128 : 64;
+            tH = 64;
+        } else {
+            switch (formatProps.stride) {
+                case 1:
+                    tW = 64;
+                    tH = 64;
+                    break;
+                case 2:
+                    tW = 64;
+                    tH = 32;
+                    break;
+                case 4:
+                    tW = 32;
+                    tH = 32;
+                    break;
+                case 8:
+                    tW = 32;
+                    tH = 16;
+                    break;
+                case 16:
+                    tW = 16;
+                    tH = 16;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // For 1D textures, the height is effectively 1 texel, but the tile "shape" remains the same for the width calculation
+        if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+            tH = 1;
+    }
+
+    // Calculate grid
+    uint32_t tilesX = ((uint32_t)desc.Width + tW - 1) / tW;
+    uint32_t tilesY = (desc.Height + tH - 1) / tH;
+    uint32_t tilesZ = desc.DepthOrArraySize;
+
+    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+        tilesZ = (desc.DepthOrArraySize + tD - 1) / tD;
+
+    // Must fit in 16 tiles
+    uint32_t totalTiles = tilesX * tilesY * tilesZ;
+
+    return totalTiles <= 16;
+}
+
 void DeviceD3D12::GetResourceDesc(const TextureDesc& textureDesc, D3D12_RESOURCE_DESC& desc) const {
     const FormatProps& formatProps = GetFormatProps(textureDesc.format);
     const DxgiFormat& dxgiFormat = GetDxgiFormat(textureDesc.format);
@@ -1086,20 +1208,9 @@ void DeviceD3D12::GetResourceDesc(const TextureDesc& textureDesc, D3D12_RESOURCE
         desc.Flags |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
     else
 #endif
-    { // "Small resource" alignment
-        bool isRTorDS = desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-        if (!isRTorDS) {
-            uint64_t mip0size = desc.Width * desc.Height;
-            mip0size *= desc.DepthOrArraySize;
-            mip0size *= formatProps.stride;
-            mip0size /= formatProps.blockWidth;
-            mip0size /= formatProps.blockHeight;
-
-            if (mip0size <= 64 * 1024) {
-                bool isMSAA = desc.SampleDesc.Count > 1;
-                desc.Alignment = isMSAA ? D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
-            }
-        }
+    {
+        if (CanUseSmallAlignment(desc, formatProps))
+            desc.Alignment = desc.SampleDesc.Count > 1 ? D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
     }
 }
 
