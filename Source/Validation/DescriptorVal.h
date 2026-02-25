@@ -33,9 +33,7 @@ enum class DescriptorTypeExt : uint8_t {
 struct DescriptorVal final : public ObjectVal {
     DescriptorVal(DeviceVal& device, Descriptor* descriptor, DescriptorType type);
     DescriptorVal(DeviceVal& device, Descriptor* descriptor, const BufferViewDesc& bufferViewDesc);
-    DescriptorVal(DeviceVal& device, Descriptor* descriptor, const Texture1DViewDesc& textureViewDesc);
-    DescriptorVal(DeviceVal& device, Descriptor* descriptor, const Texture2DViewDesc& textureViewDesc);
-    DescriptorVal(DeviceVal& device, Descriptor* descriptor, const Texture3DViewDesc& textureViewDesc);
+    DescriptorVal(DeviceVal& device, Descriptor* descriptor, const TextureViewDesc& textureViewDesc);
 
     inline Descriptor* GetImpl() const {
         return (Descriptor*)m_Impl;

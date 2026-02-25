@@ -289,7 +289,7 @@ NriEnum(Format, uint8_t,                // |      FormatSupportBits      |
     D32_SFLOAT,                         // . . . . + . + + + . . . . . . .
     D32_SFLOAT_S8_UINT_X24,             // . . . . + . + + + . . . . . . .
 
-    // Depth-stencil (SHADER_RESOURCE)
+    // Depth-stencil (as a shader resource view)
     R24_UNORM_X8,       // .x - depth   // + . . . . . . . . . . . . . . .
     X24_G8_UINT,        // .y - stencil // + . . . . . . . . . . . . . . .
     R32_SFLOAT_X8_X24,  // .x - depth   // + . . . . . . . . . . . . . . .
@@ -456,7 +456,7 @@ NriBits(AccessBits, uint32_t,
     MICROMAP_READ                   = NriBit(13),   // R        MICROMAP, ACCELERATION_STRUCTURE
     MICROMAP_WRITE                  = NriBit(14),   //  W       MICROMAP
 
-    // Shader resource
+    // Shader
     SHADER_RESOURCE                 = NriBit(15),   // R        ALL_SHADERS
     SHADER_RESOURCE_STORAGE         = NriBit(16),   // RW       ALL_SHADERS, CLEAR_STORAGE
     SHADER_BINDING_TABLE            = NriBit(17),   // R        RAY_TRACING_SHADERS
@@ -504,7 +504,7 @@ NriEnum(Layout, uint8_t,            // Compatible "AccessBits":
     SHADING_RATE_ATTACHMENT,            // SHADING_RATE_ATTACHMENT
     INPUT_ATTACHMENT,                   // COLOR_ATTACHMENT, INPUT_ATTACHMENT
 
-    // Shader resource
+    // Shader
     SHADER_RESOURCE,                    // SHADER_RESOURCE
     SHADER_RESOURCE_STORAGE,            // SHADER_RESOURCE_STORAGE
 
@@ -597,8 +597,8 @@ NriEnum(SharingMode, uint8_t,
 // https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
 NriBits(TextureUsageBits, uint8_t,                  // Min compatible access:                   Usage:
     NONE                                = 0,
-    SHADER_RESOURCE                     = NriBit(0),    // SHADER_RESOURCE                          Read-only shader resource (SRV)
-    SHADER_RESOURCE_STORAGE             = NriBit(1),    // SHADER_RESOURCE_STORAGE                  Read/write shader resource (UAV)
+    SHADER_RESOURCE                     = NriBit(0),    // SHADER_RESOURCE                          Read-only shader resource view (SRV)
+    SHADER_RESOURCE_STORAGE             = NriBit(1),    // SHADER_RESOURCE_STORAGE                  Read/write shader resource view (UAV)
     COLOR_ATTACHMENT                    = NriBit(2),    // COLOR_ATTACHMENT                         Color attachment (render target)
     DEPTH_STENCIL_ATTACHMENT            = NriBit(3),    // DEPTH_STENCIL_ATTACHMENT_READ/WRITE      Depth-stencil attachment (depth-stencil target)
     SHADING_RATE_ATTACHMENT             = NriBit(4),    // SHADING_RATE_ATTACHMENT                  Shading rate attachment (source)
@@ -608,8 +608,8 @@ NriBits(TextureUsageBits, uint8_t,                  // Min compatible access:   
 // https://docs.vulkan.org/refpages/latest/refpages/source/VkBufferUsageFlagBits.html
 NriBits(BufferUsageBits, uint16_t,                  // Min compatible access:                   Usage:
     NONE                                = 0,
-    SHADER_RESOURCE                     = NriBit(0),    // SHADER_RESOURCE                          Read-only shader resource (SRV)
-    SHADER_RESOURCE_STORAGE             = NriBit(1),    // SHADER_RESOURCE_STORAGE                  Read/write shader resource (UAV)
+    SHADER_RESOURCE                     = NriBit(0),    // SHADER_RESOURCE                          Read-only shader resource view (SRV)
+    SHADER_RESOURCE_STORAGE             = NriBit(1),    // SHADER_RESOURCE_STORAGE                  Read/write shader resource view (UAV)
     VERTEX_BUFFER                       = NriBit(2),    // VERTEX_BUFFER                            Vertex buffer
     INDEX_BUFFER                        = NriBit(3),    // INDEX_BUFFER                             Index buffer
     CONSTANT_BUFFER                     = NriBit(4),    // CONSTANT_BUFFER                          Constant buffer (D3D11: can't be combined with other usages)
@@ -639,7 +639,7 @@ NriStruct(TextureDesc) {
 // - VK: buffers are always created with sharing mode "CONCURRENT" to match D3D12 spec
 // - "structureStride" values:
 //   - 0  - allows only "typed" views
-//   - 4  - allows "typed", "byte address (raw)" and "structured" views
+//   - 4  - allows "typed", "byte address" and "structured" views
 //          D3D11: allows to create multiple "structured" views for a single resource, disobeying the spec
 //   - >4 - allows only "structured" views
 //          D3D11: locks this buffer to a single "structured" layout
@@ -714,52 +714,36 @@ NriStruct(BindTextureMemoryDesc) {
 #pragma endregion
 
 //============================================================================================================================================================================================
-#pragma region [ Resource view or sampler creation (descriptor) ]
+#pragma region [ Resource views and samplers (descriptors) ]
 //============================================================================================================================================================================================
 
 // https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#creating-descriptors
-NriEnum(Texture1DViewType, uint8_t,     // HLSL type                                Compatible "DescriptorType"
-    SHADER_RESOURCE,                        // Texture1D                                TEXTURE
-    SHADER_RESOURCE_ARRAY,                  // Texture1DArray                           TEXTURE
-    SHADER_RESOURCE_STORAGE,                // RWTexture1D                              STORAGE_TEXTURE
-    SHADER_RESOURCE_STORAGE_ARRAY,          // RWTexture1DArray                         STORAGE_TEXTURE
+
+NriEnum(TextureView, uint8_t,
+    // Shader resources         // HLSL type                        Compatible "DescriptorType"     Compatible "TextureType"
+    TEXTURE,                        // Texture[1D/2D/3D](MS)            TEXTURE                         1D, 2D, 3D
+    TEXTURE_ARRAY,                  // Texture[1D/2D](MS)Array          TEXTURE                         1D, 2D
+    TEXTURE_CUBE,                   // TextureCube                      TEXTURE                             2D
+    TEXTURE_CUBE_ARRAY,             // TextureCubeArray                 TEXTURE                             2D
+    STORAGE_TEXTURE,                // RWTexture[1D/2D/3D](MS)          STORAGE_TEXTURE                 1D, 2D, 3D
+    STORAGE_TEXTURE_ARRAY,          // RWTexture[1D/2D](MS)Array        STORAGE_TEXTURE                 1D, 2D
+    SUBPASS_INPUT,                  // SubpassInput(MS) (non-array)     INPUT_ATTACHMENT                    2D
 
     // Host-only
-    COLOR_ATTACHMENT,
-    DEPTH_STENCIL_ATTACHMENT
+    COLOR_ATTACHMENT,               //                                                                  1D, 2D, 3D
+    DEPTH_STENCIL_ATTACHMENT,       //                                                                  1D, 2D
+    SHADING_RATE_ATTACHMENT         //                                                                      2D
 );
 
-NriEnum(Texture2DViewType, uint8_t,     // HLSL type                                Compatible "DescriptorType"
-    SHADER_RESOURCE,                        // Texture2D(MS), SubpassInput(MS)          TEXTURE
-    SHADER_RESOURCE_ARRAY,                  // Texture2D(MS)Array, SubpassInput(MS)     TEXTURE
-    SHADER_RESOURCE_CUBE,                   // TextureCube                              TEXTURE
-    SHADER_RESOURCE_CUBE_ARRAY,             // TextureCubeArray                         TEXTURE
-    SHADER_RESOURCE_STORAGE,                // RWTexture2D(MS)                          STORAGE_TEXTURE
-    SHADER_RESOURCE_STORAGE_ARRAY,          // RWTexture2D(MS)Array                     STORAGE_TEXTURE
-    INPUT_ATTACHMENT,                       // SubpassInput(MS) (non-array)             INPUT_ATTACHMENT
-
-    // Host-only
-    COLOR_ATTACHMENT,
-    DEPTH_STENCIL_ATTACHMENT,
-    SHADING_RATE_ATTACHMENT
-);
-
-NriEnum(Texture3DViewType, uint8_t,     // HLSL type                                Compatible "DescriptorType"
-    SHADER_RESOURCE,                        // Texture3D                                TEXTURE
-    SHADER_RESOURCE_STORAGE,                // RWTexture3D                              STORAGE_TEXTURE
-
-    // Host-only
-    COLOR_ATTACHMENT
-);
-
-NriEnum(BufferViewType, uint8_t,        // HLSL type                                Compatible "DescriptorType"
-    SHADER_RESOURCE,                        // Buffer                                   BUFFER
-    SHADER_RESOURCE_STRUCTURED,             // StructuredBuffer                         STRUCTURED_BUFFER
-    SHADER_RESOURCE_BYTE_ADDRESS,           // ByteAddressBuffer                        STRUCTURED_BUFFER
-    SHADER_RESOURCE_STORAGE,                // RWBuffer                                 STORAGE_BUFFER
-    SHADER_RESOURCE_STORAGE_STRUCTURED,     // RWStructuredBuffer                       STORAGE_STRUCTURED_BUFFER
-    SHADER_RESOURCE_STORAGE_BYTE_ADDRESS,   // RWByteAddressBuffer                      STORAGE_STRUCTURED_BUFFER
-    CONSTANT                                // ConstantBuffer                           CONSTANT_BUFFER
+NriEnum(BufferView, uint8_t,
+    // Shader resources         // HLSL type                        Compatible "DescriptorType"
+    BUFFER,                         // Buffer                           BUFFER
+    STRUCTURED_BUFFER,              // StructuredBuffer                 STRUCTURED_BUFFER
+    BYTE_ADDRESS_BUFFER,            // ByteAddressBuffer                STRUCTURED_BUFFER
+    STORAGE_BUFFER,                 // RWBuffer                         STORAGE_BUFFER
+    STORAGE_STRUCTURED_BUFFER,      // RWStructuredBuffer               STORAGE_STRUCTURED_BUFFER
+    STORAGE_BYTE_ADDRESS_BUFFER,    // RWByteAddressBuffer              STORAGE_STRUCTURED_BUFFER
+    CONSTANT_BUFFER                 // ConstantBuffer                   CONSTANT_BUFFER
 );
 
 // https://docs.vulkan.org/refpages/latest/refpages/source/VkFilter.html
@@ -819,55 +803,34 @@ NriEnum(ComponentSwizzle, uint8_t,
 );
 
 NriStruct(ComponentMapping) {
-    // Only for "SHADER_RESOURCE" (not "STORAGE")
+    // Only for non-"STORAGE" views
     Nri(ComponentSwizzle) r;
     Nri(ComponentSwizzle) g;
     Nri(ComponentSwizzle) b;
     Nri(ComponentSwizzle) a;
 };
 
-NriStruct(Texture1DViewDesc) {
+NriStruct(TextureViewDesc) {
     const NriPtr(Texture) texture;
-    Nri(Texture1DViewType) viewType;
+    Nri(TextureView) type;
     Nri(Format) format;
     Nri(Dim_t) mipOffset;
-    Nri(Dim_t) mipNum;              // can be "REMAINING"
+    Nri(Dim_t) mipNum;                      // can be "REMAINING"
     Nri(Dim_t) layerOffset;
-    Nri(Dim_t) layerNum;            // can be "REMAINING"
-    Nri(PlaneBits) readonlyPlanes;  // "DEPTH" and/or "STENCIL"
-    Nri(ComponentMapping) components;
-};
-
-NriStruct(Texture2DViewDesc) {
-    const NriPtr(Texture) texture;
-    Nri(Texture2DViewType) viewType;
-    Nri(Format) format;
-    Nri(Dim_t) mipOffset;
-    Nri(Dim_t) mipNum;              // can be "REMAINING"
-    Nri(Dim_t) layerOffset;
-    Nri(Dim_t) layerNum;            // can be "REMAINING"
-    Nri(PlaneBits) readonlyPlanes;  // "DEPTH" and/or "STENCIL"
-    Nri(ComponentMapping) components;
-};
-
-NriStruct(Texture3DViewDesc) {
-    const NriPtr(Texture) texture;
-    Nri(Texture3DViewType) viewType;
-    Nri(Format) format;
-    Nri(Dim_t) mipOffset;
-    Nri(Dim_t) mipNum;              // can be "REMAINING"
+    Nri(Dim_t) layerNum;                    // can be "REMAINING"
     Nri(Dim_t) sliceOffset;
-    Nri(Dim_t) sliceNum;            // can be "REMAINING"
+    Nri(Dim_t) sliceNum;                    // can be "REMAINING"
+    Nri(PlaneBits) readonlyPlanes;          // "DEPTH" and/or "STENCIL"
     Nri(ComponentMapping) components;
 };
 
 NriStruct(BufferViewDesc) {
     const NriPtr(Buffer) buffer;
-    Nri(BufferViewType) viewType;
+    Nri(BufferView) type;
     uint64_t offset;                        // expects "memoryAlignment.bufferShaderResourceOffset" for shader resources
     uint64_t size;                          // can be "WHOLE_SIZE"
-    NriOptional Nri(Format) format;         // for typed views, i.e. "SHADER_RESOURCE" and "SHADER_RESOURCE_STORAGE"
-    NriOptional uint32_t structureStride;   // for structured views, i.e. "SHADER_RESOURCE_STRUCTURED" and "SHADER_RESOURCE_STORAGE_STRUCTURED" (= "BufferDesc::structureStride", if not provided)
+    NriOptional Nri(Format) format;         // needed for typed views, i.e. "BUFFER" and "BUFFER_STORAGE"
+    NriOptional uint32_t structureStride;   // needed for structured views, i.e. "STRUCTURED_BUFFER" and "STRUCTURED_BUFFER_STORAGE" (= "BufferDesc::structureStride", if not provided)
 };
 
 NriStruct(AddressModes) {
@@ -942,7 +905,7 @@ NriBits(DescriptorRangeBits, uint8_t,
 
 // https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorType.html
 NriEnum(DescriptorType, uint8_t,
-                            // Typed   HLSL reg    Compatible views
+                            // Typed   HLSL reg    Compatible resources
     // Sampler heap
     SAMPLER,                    // -        s           sampler
 
@@ -954,15 +917,15 @@ NriEnum(DescriptorType, uint8_t,
     MUTABLE,                    // -        -           any non-sampler
 
     // Optimized resources
-    TEXTURE,                    // +        t           Texture(1D/2D/3D)ViewType: SHADER_RESOURCE, SHADER_RESOURCE_ARRAY, SHADER_RESOURCE_CUBE, SHADER_RESOURCE_CUBE_ARRAY
-    STORAGE_TEXTURE,            // +        u           Texture(1D/2D/3D)ViewType: SHADER_RESOURCE_STORAGE, SHADER_RESOURCE_STORAGE_ARRAY
-    INPUT_ATTACHMENT,           // +        -           Texture2DViewType: INPUT_ATTACHMENT
+    TEXTURE,                    // +        t           TextureView: TEXTURE, TEXTURE_ARRAY, TEXTURE_CUBE, TEXTURE_CUBE_ARRAY
+    STORAGE_TEXTURE,            // +        u           TextureView: STORAGE_TEXTURE, STORAGE_TEXTURE_ARRAY
+    INPUT_ATTACHMENT,           // +        -           TextureView: SUBPASS_INPUT
 
-    BUFFER,                     // +        t           BufferViewType: SHADER_RESOURCE
-    STORAGE_BUFFER,             // +        u           BufferViewType: SHADER_RESOURCE_STORAGE
-    CONSTANT_BUFFER,            // -        b           BufferViewType: CONSTANT_BUFFER
-    STRUCTURED_BUFFER,          // -        t           BufferViewType: SHADER_RESOURCE_STRUCTURED, SHADER_RESOURCE_BYTE_ADDRESS
-    STORAGE_STRUCTURED_BUFFER,  // -        u           BufferViewType: SHADER_RESOURCE_STORAGE_STRUCTURED, SHADER_RESOURCE_STORAGE_BYTE_ADDRESS
+    BUFFER,                     // +        t           BufferView: BUFFER
+    STORAGE_BUFFER,             // +        u           BufferView: STORAGE_BUFFER
+    CONSTANT_BUFFER,            // -        b           BufferView: CONSTANT_BUFFER
+    STRUCTURED_BUFFER,          // -        t           BufferView: STRUCTURED_BUFFER, BYTE_ADDRESS_BUFFER
+    STORAGE_STRUCTURED_BUFFER,  // -        u           BufferView: STORAGE_STRUCTURED_BUFFER, STORAGE_BYTE_ADDRESS_BUFFER
 
     ACCELERATION_STRUCTURE      // -        t           acceleration structure, requires "features.rayTracing"
 );
@@ -1694,10 +1657,10 @@ NriStruct(ClearAttachmentDesc) {
 // - variant 2: "CLEAR_STORAGE" access ("SHADER_RESOURCE_STORAGE" layout) and "CLEAR_STORAGE" stage
 NriStruct(ClearStorageDesc) {
     // For any buffers and textures with integer formats:
-    //  - Clears a storage view with bit-precise values, copying the lower "N" bits from "value.[f/ui/i].channel"
+    //  - Clears a storage descriptor with bit-precise values, copying the lower "N" bits from "value.[f/ui/i].channel"
     //    to the corresponding channel, where "N" is the number of bits in the "channel" of the resource format
     // For textures with non-integer formats:
-    //  - Clears a storage view with float values with format conversion from "FLOAT" to "UNORM/SNORM" where appropriate
+    //  - Clears a storage descriptor with float values with format conversion from "FLOAT" to "UNORM/SNORM" where appropriate
     // For buffers:
     //  - To avoid discrepancies in behavior between GAPIs use "R32f/ui/i" formats for views
     //  - D3D: structured buffers are unsupported!

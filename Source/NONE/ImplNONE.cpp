@@ -295,19 +295,7 @@ static Result NRI_CALL CreateBufferView(const BufferViewDesc&, Descriptor*& buff
     return Result::SUCCESS;
 }
 
-static Result NRI_CALL CreateTexture1DView(const Texture1DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture2DView(const Texture2DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture3DView(const Texture3DViewDesc&, Descriptor*& textureView) {
+static Result NRI_CALL CreateTextureView(const TextureViewDesc&, Descriptor*& textureView) {
     textureView = DummyObject<Descriptor>();
 
     return Result::SUCCESS;
@@ -647,9 +635,7 @@ Result DeviceNONE::FillFunctionTable(CoreInterface& table) const {
     table.CreateCommandBuffer = ::CreateCommandBuffer;
     table.CreateDescriptorPool = ::CreateDescriptorPool;
     table.CreateBufferView = ::CreateBufferView;
-    table.CreateTexture1DView = ::CreateTexture1DView;
-    table.CreateTexture2DView = ::CreateTexture2DView;
-    table.CreateTexture3DView = ::CreateTexture3DView;
+    table.CreateTextureView = ::CreateTextureView;
     table.CreateSampler = ::CreateSampler;
     table.CreatePipelineLayout = ::CreatePipelineLayout;
     table.CreateGraphicsPipeline = ::CreateGraphicsPipeline;

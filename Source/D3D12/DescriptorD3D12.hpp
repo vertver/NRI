@@ -55,287 +55,254 @@ static inline uint32_t GetComponentMapping(const ComponentMapping& componentMapp
     return D3D12_ENCODE_SHADER_4_COMPONENT_MAPPING(r, g, b, a);
 }
 
-Result DescriptorD3D12::Create(const Texture1DViewDesc& textureViewDesc) {
+Result DescriptorD3D12::Create(const TextureViewDesc& textureViewDesc) {
     const TextureD3D12& textureD3D12 = *(TextureD3D12*)textureViewDesc.texture;
     const TextureDesc& textureDesc = textureD3D12.GetDesc();
 
     DXGI_FORMAT format = GetDxgiFormat(textureViewDesc.format).typed;
     Dim_t mipNum = textureViewDesc.mipNum == REMAINING ? (textureDesc.mipNum - textureViewDesc.mipOffset) : textureViewDesc.mipNum;
     Dim_t layerNum = textureViewDesc.layerNum == REMAINING ? (textureDesc.layerNum - textureViewDesc.layerOffset) : textureViewDesc.layerNum;
-
-    m_ViewDesc.texture = {};
-    m_ViewDesc.texture.layerOffset = textureViewDesc.layerOffset;
-    m_ViewDesc.texture.layerNum = layerNum;
-    m_ViewDesc.texture.mipOffset = textureViewDesc.mipOffset;
-    m_ViewDesc.texture.mipNum = mipNum;
-
-    m_Format = textureViewDesc.format;
-    m_Resource = textureD3D12;
-
-    switch (textureViewDesc.viewType) {
-        case Texture1DViewType::SHADER_RESOURCE: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            desc.Texture1D.MostDetailedMip = textureViewDesc.mipOffset;
-            desc.Texture1D.MipLevels = mipNum;
-
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture1DViewType::SHADER_RESOURCE_ARRAY: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            desc.Texture1DArray.MostDetailedMip = textureViewDesc.mipOffset;
-            desc.Texture1DArray.MipLevels = mipNum;
-            desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
-            desc.Texture1DArray.ArraySize = layerNum;
-
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture1DViewType::SHADER_RESOURCE_STORAGE: {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-            desc.Texture1D.MipSlice = textureViewDesc.mipOffset;
-
-            return CreateUnorderedAccessView(textureD3D12, desc);
-        }
-        case Texture1DViewType::SHADER_RESOURCE_STORAGE_ARRAY: {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-            desc.Texture1DArray.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
-            desc.Texture1DArray.ArraySize = layerNum;
-
-            return CreateUnorderedAccessView(textureD3D12, desc);
-        }
-        case Texture1DViewType::COLOR_ATTACHMENT: {
-            D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-            desc.Texture1DArray.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
-            desc.Texture1DArray.ArraySize = layerNum;
-
-            return CreateRenderTargetView(textureD3D12, desc);
-        }
-        case Texture1DViewType::DEPTH_STENCIL_ATTACHMENT: {
-            D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-            desc.Texture1DArray.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
-            desc.Texture1DArray.ArraySize = layerNum;
-
-            if (textureViewDesc.readonlyPlanes & PlaneBits::DEPTH)
-                desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_DEPTH;
-            if (textureViewDesc.readonlyPlanes & PlaneBits::STENCIL)
-                desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_STENCIL;
-
-            return CreateDepthStencilView(textureD3D12, desc);
-        }
-        default:
-            NRI_CHECK(false, "Unexpected 'textureViewDesc.viewType'");
-            return Result::INVALID_ARGUMENT;
-    }
-}
-
-Result DescriptorD3D12::Create(const Texture2DViewDesc& textureViewDesc) {
-    const TextureD3D12& textureD3D12 = (TextureD3D12&)*textureViewDesc.texture;
-    const TextureDesc& textureDesc = textureD3D12.GetDesc();
-
-    DXGI_FORMAT format = GetDxgiFormat(textureViewDesc.format).typed;
-    Dim_t mipNum = textureViewDesc.mipNum == REMAINING ? (textureDesc.mipNum - textureViewDesc.mipOffset) : textureViewDesc.mipNum;
-    Dim_t layerNum = textureViewDesc.layerNum == REMAINING ? (textureDesc.layerNum - textureViewDesc.layerOffset) : textureViewDesc.layerNum;
-
-    m_ViewDesc.texture = {};
-    m_ViewDesc.texture.layerOffset = textureViewDesc.layerOffset;
-    m_ViewDesc.texture.layerNum = layerNum;
-    m_ViewDesc.texture.mipOffset = textureViewDesc.mipOffset;
-    m_ViewDesc.texture.mipNum = mipNum;
-
-    m_Format = textureViewDesc.format;
-    m_Resource = textureD3D12;
-
-    switch (textureViewDesc.viewType) {
-        case Texture2DViewType::INPUT_ATTACHMENT:
-        case Texture2DViewType::SHADER_RESOURCE: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = GetShaderFormatForDepth(format);
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            if (textureDesc.sampleNum > 1) {
-                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-            } else {
-                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MostDetailedMip = textureViewDesc.mipOffset;
-                desc.Texture2D.MipLevels = mipNum;
-                desc.Texture2D.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
-            }
-
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture2DViewType::SHADER_RESOURCE_ARRAY: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = GetShaderFormatForDepth(format);
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            if (textureDesc.sampleNum > 1) {
-                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                desc.Texture2DMSArray.FirstArraySlice = textureViewDesc.layerOffset;
-                desc.Texture2DMSArray.ArraySize = layerNum;
-            } else {
-                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                desc.Texture2DArray.MostDetailedMip = textureViewDesc.mipOffset;
-                desc.Texture2DArray.MipLevels = mipNum;
-                desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
-                desc.Texture2DArray.ArraySize = layerNum;
-                desc.Texture2DArray.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
-            }
-
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture2DViewType::SHADER_RESOURCE_CUBE: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = GetShaderFormatForDepth(format);
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            desc.TextureCube.MostDetailedMip = textureViewDesc.mipOffset;
-            desc.TextureCube.MipLevels = mipNum;
-
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture2DViewType::SHADER_RESOURCE_CUBE_ARRAY: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = GetShaderFormatForDepth(format);
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-            desc.TextureCubeArray.MostDetailedMip = textureViewDesc.mipOffset;
-            desc.TextureCubeArray.MipLevels = mipNum;
-            desc.TextureCubeArray.First2DArrayFace = textureViewDesc.layerOffset;
-            desc.TextureCubeArray.NumCubes = layerNum / 6;
-
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture2DViewType::SHADER_RESOURCE_STORAGE: {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-            desc.Texture2D.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture2D.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
-
-            return CreateUnorderedAccessView(textureD3D12, desc);
-        }
-        case Texture2DViewType::SHADER_RESOURCE_STORAGE_ARRAY: {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            desc.Texture2DArray.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
-            desc.Texture2DArray.ArraySize = layerNum;
-            desc.Texture2DArray.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
-
-            return CreateUnorderedAccessView(textureD3D12, desc);
-        }
-        case Texture2DViewType::COLOR_ATTACHMENT: {
-            D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-            desc.Format = format;
-            if (textureDesc.sampleNum > 1) {
-                desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                desc.Texture2DMSArray.FirstArraySlice = textureViewDesc.layerOffset;
-                desc.Texture2DMSArray.ArraySize = layerNum;
-            } else {
-                desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-                desc.Texture2DArray.MipSlice = textureViewDesc.mipOffset;
-                desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
-                desc.Texture2DArray.ArraySize = layerNum;
-                desc.Texture2DArray.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
-            }
-
-            return CreateRenderTargetView(textureD3D12, desc);
-        }
-        case Texture2DViewType::DEPTH_STENCIL_ATTACHMENT: {
-            D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
-            desc.Format = format;
-            if (textureDesc.sampleNum > 1) {
-                desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-                desc.Texture2DMSArray.FirstArraySlice = textureViewDesc.layerOffset;
-                desc.Texture2DMSArray.ArraySize = layerNum;
-            } else {
-                desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-                desc.Texture2DArray.MipSlice = textureViewDesc.mipOffset;
-                desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
-                desc.Texture2DArray.ArraySize = layerNum;
-            }
-
-            if (textureViewDesc.readonlyPlanes & PlaneBits::DEPTH)
-                desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_DEPTH;
-            if (textureViewDesc.readonlyPlanes & PlaneBits::STENCIL)
-                desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_STENCIL;
-
-            return CreateDepthStencilView(textureD3D12, desc);
-        }
-        case Texture2DViewType::SHADING_RATE_ATTACHMENT:
-            return Result::SUCCESS; // a resource view is not needed
-        default:
-            NRI_CHECK(false, "Unexpected 'textureViewDesc.viewType'");
-            return Result::INVALID_ARGUMENT;
-    }
-}
-
-Result DescriptorD3D12::Create(const Texture3DViewDesc& textureViewDesc) {
-    const TextureD3D12& textureD3D12 = (TextureD3D12&)*textureViewDesc.texture;
-    const TextureDesc& textureDesc = textureD3D12.GetDesc();
-
-    DXGI_FORMAT format = GetDxgiFormat(textureViewDesc.format).typed;
-    Dim_t mipNum = textureViewDesc.mipNum == REMAINING ? (textureDesc.mipNum - textureViewDesc.mipOffset) : textureViewDesc.mipNum;
     Dim_t sliceNum = textureViewDesc.sliceNum == REMAINING ? (textureDesc.depth - textureViewDesc.sliceOffset) : textureViewDesc.sliceNum;
 
     m_ViewDesc.texture = {};
-    m_ViewDesc.texture.layerOffset = 0;
-    m_ViewDesc.texture.layerNum = 1;
+    m_ViewDesc.texture.layerOffset = textureViewDesc.layerOffset;
+    m_ViewDesc.texture.layerNum = layerNum;
     m_ViewDesc.texture.mipOffset = textureViewDesc.mipOffset;
     m_ViewDesc.texture.mipNum = mipNum;
 
     m_Format = textureViewDesc.format;
     m_Resource = textureD3D12;
 
-    switch (textureViewDesc.viewType) {
-        case Texture3DViewType::SHADER_RESOURCE: {
-            D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-            desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
-            desc.Texture3D.MostDetailedMip = textureViewDesc.mipOffset;
-            desc.Texture3D.MipLevels = mipNum;
+    if (textureDesc.type == TextureType::TEXTURE_1D) {
+        switch (textureViewDesc.type) {
+            case TextureView::TEXTURE: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                desc.Texture1D.MostDetailedMip = textureViewDesc.mipOffset;
+                desc.Texture1D.MipLevels = mipNum;
 
-            return CreateShaderResourceView(textureD3D12, desc);
-        }
-        case Texture3DViewType::SHADER_RESOURCE_STORAGE: {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-            desc.Texture3D.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture3D.FirstWSlice = textureViewDesc.sliceOffset;
-            desc.Texture3D.WSize = sliceNum;
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::TEXTURE_ARRAY: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                desc.Texture1DArray.MostDetailedMip = textureViewDesc.mipOffset;
+                desc.Texture1DArray.MipLevels = mipNum;
+                desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                desc.Texture1DArray.ArraySize = layerNum;
 
-            return CreateUnorderedAccessView(textureD3D12, desc);
-        }
-        case Texture3DViewType::COLOR_ATTACHMENT: {
-            D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-            desc.Format = format;
-            desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-            desc.Texture3D.MipSlice = textureViewDesc.mipOffset;
-            desc.Texture3D.FirstWSlice = textureViewDesc.sliceOffset;
-            desc.Texture3D.WSize = sliceNum;
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::STORAGE_TEXTURE: {
+                D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+                desc.Texture1D.MipSlice = textureViewDesc.mipOffset;
 
-            return CreateRenderTargetView(textureD3D12, desc);
+                return CreateUnorderedAccessView(textureD3D12, desc);
+            }
+            case TextureView::STORAGE_TEXTURE_ARRAY: {
+                D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+                desc.Texture1DArray.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                desc.Texture1DArray.ArraySize = layerNum;
+
+                return CreateUnorderedAccessView(textureD3D12, desc);
+            }
+            case TextureView::COLOR_ATTACHMENT: {
+                D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+                desc.Texture1DArray.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                desc.Texture1DArray.ArraySize = layerNum;
+
+                return CreateRenderTargetView(textureD3D12, desc);
+            }
+            case TextureView::DEPTH_STENCIL_ATTACHMENT: {
+                D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+                desc.Texture1DArray.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture1DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                desc.Texture1DArray.ArraySize = layerNum;
+
+                if (textureViewDesc.readonlyPlanes & PlaneBits::DEPTH)
+                    desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_DEPTH;
+                if (textureViewDesc.readonlyPlanes & PlaneBits::STENCIL)
+                    desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_STENCIL;
+
+                return CreateDepthStencilView(textureD3D12, desc);
+            }
+            default:
+                NRI_CHECK(false, "Unexpected 'textureViewDesc.type'");
+                return Result::INVALID_ARGUMENT;
         }
-        default:
-            NRI_CHECK(false, "Unexpected 'textureViewDesc.viewType'");
-            return Result::INVALID_ARGUMENT;
+    } else if (textureDesc.type == TextureType::TEXTURE_2D) {
+        switch (textureViewDesc.type) {
+            case TextureView::SUBPASS_INPUT:
+            case TextureView::TEXTURE: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = GetShaderFormatForDepth(format);
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                if (textureDesc.sampleNum > 1) {
+                    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+                } else {
+                    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+                    desc.Texture2D.MostDetailedMip = textureViewDesc.mipOffset;
+                    desc.Texture2D.MipLevels = mipNum;
+                    desc.Texture2D.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
+                }
+
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::TEXTURE_ARRAY: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = GetShaderFormatForDepth(format);
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                if (textureDesc.sampleNum > 1) {
+                    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+                    desc.Texture2DMSArray.FirstArraySlice = textureViewDesc.layerOffset;
+                    desc.Texture2DMSArray.ArraySize = layerNum;
+                } else {
+                    desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MostDetailedMip = textureViewDesc.mipOffset;
+                    desc.Texture2DArray.MipLevels = mipNum;
+                    desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                    desc.Texture2DArray.ArraySize = layerNum;
+                    desc.Texture2DArray.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
+                }
+
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::TEXTURE_CUBE: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = GetShaderFormatForDepth(format);
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+                desc.TextureCube.MostDetailedMip = textureViewDesc.mipOffset;
+                desc.TextureCube.MipLevels = mipNum;
+
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::TEXTURE_CUBE_ARRAY: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = GetShaderFormatForDepth(format);
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+                desc.TextureCubeArray.MostDetailedMip = textureViewDesc.mipOffset;
+                desc.TextureCubeArray.MipLevels = mipNum;
+                desc.TextureCubeArray.First2DArrayFace = textureViewDesc.layerOffset;
+                desc.TextureCubeArray.NumCubes = layerNum / 6;
+
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::STORAGE_TEXTURE: {
+                D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture2D.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
+
+                return CreateUnorderedAccessView(textureD3D12, desc);
+            }
+            case TextureView::STORAGE_TEXTURE_ARRAY: {
+                D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+                desc.Texture2DArray.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                desc.Texture2DArray.ArraySize = layerNum;
+                desc.Texture2DArray.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
+
+                return CreateUnorderedAccessView(textureD3D12, desc);
+            }
+            case TextureView::COLOR_ATTACHMENT: {
+                D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+                desc.Format = format;
+                if (textureDesc.sampleNum > 1) {
+                    desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                    desc.Texture2DMSArray.FirstArraySlice = textureViewDesc.layerOffset;
+                    desc.Texture2DMSArray.ArraySize = layerNum;
+                } else {
+                    desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MipSlice = textureViewDesc.mipOffset;
+                    desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                    desc.Texture2DArray.ArraySize = layerNum;
+                    desc.Texture2DArray.PlaneSlice = GetPlaneIndex(textureViewDesc.format);
+                }
+
+                return CreateRenderTargetView(textureD3D12, desc);
+            }
+            case TextureView::DEPTH_STENCIL_ATTACHMENT: {
+                D3D12_DEPTH_STENCIL_VIEW_DESC desc = {};
+                desc.Format = format;
+                if (textureDesc.sampleNum > 1) {
+                    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                    desc.Texture2DMSArray.FirstArraySlice = textureViewDesc.layerOffset;
+                    desc.Texture2DMSArray.ArraySize = layerNum;
+                } else {
+                    desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MipSlice = textureViewDesc.mipOffset;
+                    desc.Texture2DArray.FirstArraySlice = textureViewDesc.layerOffset;
+                    desc.Texture2DArray.ArraySize = layerNum;
+                }
+
+                if (textureViewDesc.readonlyPlanes & PlaneBits::DEPTH)
+                    desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_DEPTH;
+                if (textureViewDesc.readonlyPlanes & PlaneBits::STENCIL)
+                    desc.Flags |= D3D12_DSV_FLAG_READ_ONLY_STENCIL;
+
+                return CreateDepthStencilView(textureD3D12, desc);
+            }
+            case TextureView::SHADING_RATE_ATTACHMENT:
+                return Result::SUCCESS; // a resource view is not needed
+            default:
+                NRI_CHECK(false, "Unexpected 'textureViewDesc.type'");
+                return Result::INVALID_ARGUMENT;
+        }
+    } else {
+        switch (textureViewDesc.type) {
+            case TextureView::TEXTURE: {
+                D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+                desc.Shader4ComponentMapping = GetComponentMapping(textureViewDesc.components);
+                desc.Texture3D.MostDetailedMip = textureViewDesc.mipOffset;
+                desc.Texture3D.MipLevels = mipNum;
+
+                return CreateShaderResourceView(textureD3D12, desc);
+            }
+            case TextureView::STORAGE_TEXTURE: {
+                D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+                desc.Texture3D.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture3D.FirstWSlice = textureViewDesc.sliceOffset;
+                desc.Texture3D.WSize = sliceNum;
+
+                return CreateUnorderedAccessView(textureD3D12, desc);
+            }
+            case TextureView::COLOR_ATTACHMENT: {
+                D3D12_RENDER_TARGET_VIEW_DESC desc = {};
+                desc.Format = format;
+                desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
+                desc.Texture3D.MipSlice = textureViewDesc.mipOffset;
+                desc.Texture3D.FirstWSlice = textureViewDesc.sliceOffset;
+                desc.Texture3D.WSize = sliceNum;
+
+                return CreateRenderTargetView(textureD3D12, desc);
+            }
+            default:
+                NRI_CHECK(false, "Unexpected 'textureViewDesc.type'");
+                return Result::INVALID_ARGUMENT;
+        }
     }
 }
 
@@ -348,11 +315,11 @@ Result DescriptorD3D12::Create(const BufferViewDesc& bufferViewDesc) {
     uint32_t structureStride = 0;
     bool isRaw = false;
 
-    if (bufferViewDesc.viewType == BufferViewType::CONSTANT)
+    if (bufferViewDesc.type == BufferView::CONSTANT_BUFFER)
         patchedFormat = Format::RGBA32_SFLOAT;
-    else if (bufferViewDesc.viewType == BufferViewType::SHADER_RESOURCE_STRUCTURED || bufferViewDesc.viewType == BufferViewType::SHADER_RESOURCE_STORAGE_STRUCTURED)
+    else if (bufferViewDesc.type == BufferView::STRUCTURED_BUFFER || bufferViewDesc.type == BufferView::STORAGE_STRUCTURED_BUFFER)
         structureStride = bufferViewDesc.structureStride ? bufferViewDesc.structureStride : bufferDesc.structureStride;
-    else if (bufferViewDesc.viewType == BufferViewType::SHADER_RESOURCE_BYTE_ADDRESS || bufferViewDesc.viewType == BufferViewType::SHADER_RESOURCE_STORAGE_BYTE_ADDRESS) {
+    else if (bufferViewDesc.type == BufferView::BYTE_ADDRESS_BUFFER || bufferViewDesc.type == BufferView::STORAGE_BYTE_ADDRESS_BUFFER) {
         patchedFormat = Format::R32_UINT;
         isRaw = true;
     } else
@@ -369,17 +336,17 @@ Result DescriptorD3D12::Create(const BufferViewDesc& bufferViewDesc) {
     m_Format = patchedFormat;
     m_Resource = bufferD3D12;
 
-    switch (bufferViewDesc.viewType) {
-        case BufferViewType::CONSTANT: {
+    switch (bufferViewDesc.type) {
+        case BufferView::CONSTANT_BUFFER: {
             D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
             desc.BufferLocation = m_ViewDesc.bufferGPUVA;
             desc.SizeInBytes = (uint32_t)size;
 
             return CreateConstantBufferView(desc);
         }
-        case BufferViewType::SHADER_RESOURCE:
-        case BufferViewType::SHADER_RESOURCE_STRUCTURED:
-        case BufferViewType::SHADER_RESOURCE_BYTE_ADDRESS: {
+        case BufferView::BUFFER:
+        case BufferView::STRUCTURED_BUFFER:
+        case BufferView::BYTE_ADDRESS_BUFFER: {
             D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
             desc.Format = isRaw ? format.typeless : format.typed;
             desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -391,9 +358,9 @@ Result DescriptorD3D12::Create(const BufferViewDesc& bufferViewDesc) {
 
             return CreateShaderResourceView(bufferD3D12, desc);
         }
-        case BufferViewType::SHADER_RESOURCE_STORAGE:
-        case BufferViewType::SHADER_RESOURCE_STORAGE_STRUCTURED:
-        case BufferViewType::SHADER_RESOURCE_STORAGE_BYTE_ADDRESS: {
+        case BufferView::STORAGE_BUFFER:
+        case BufferView::STORAGE_STRUCTURED_BUFFER:
+        case BufferView::STORAGE_BYTE_ADDRESS_BUFFER: {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
             desc.Format = isRaw ? format.typeless : format.typed;
             desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -406,7 +373,7 @@ Result DescriptorD3D12::Create(const BufferViewDesc& bufferViewDesc) {
             return CreateUnorderedAccessView(bufferD3D12, desc);
         }
         default:
-            NRI_CHECK(false, "Unexpected 'bufferViewDesc.viewType'");
+            NRI_CHECK(false, "Unexpected 'bufferViewDesc.type'");
             return Result::INVALID_ARGUMENT;
     }
 }

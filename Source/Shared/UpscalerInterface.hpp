@@ -719,19 +719,19 @@ Result UpscalerImpl::Create(const UpscalerDesc& upscalerDesc) {
             if (result != Result::SUCCESS)
                 return result;
 
-            Texture2DViewDesc textureViewDesc = {};
-            textureViewDesc.viewType = Texture2DViewType::SHADER_RESOURCE;
+            TextureViewDesc textureViewDesc = {};
+            textureViewDesc.type = TextureView::TEXTURE;
             textureViewDesc.format = Format::RGBA16_SFLOAT;
             textureViewDesc.mipNum = 1;
             textureViewDesc.layerNum = 1;
 
             textureViewDesc.texture = m.nis->texScale;
-            result = m_iCore.CreateTexture2DView(textureViewDesc, m.nis->srvScale);
+            result = m_iCore.CreateTextureView(textureViewDesc, m.nis->srvScale);
             if (result != Result::SUCCESS)
                 return result;
 
             textureViewDesc.texture = m.nis->texUsm;
-            result = m_iCore.CreateTexture2DView(textureViewDesc, m.nis->srvUsm);
+            result = m_iCore.CreateTextureView(textureViewDesc, m.nis->srvUsm);
             if (result != Result::SUCCESS)
                 return result;
         }

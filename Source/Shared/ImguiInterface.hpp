@@ -516,12 +516,12 @@ void ImguiImpl::CmdCopyData(CommandBuffer& commandBuffer, Streamer& streamer, co
                 NRI_CHECK(result == Result::SUCCESS, "Unexpected");
 
                 // Create descriptor
-                Texture2DViewDesc viewDesc = {};
+                TextureViewDesc viewDesc = {};
                 viewDesc.texture = imguiTexture.texture;
-                viewDesc.viewType = Texture2DViewType::SHADER_RESOURCE;
+                viewDesc.type = TextureView::TEXTURE;
                 viewDesc.format = format;
 
-                result = m_iCore.CreateTexture2DView(viewDesc, imguiTexture.descriptor);
+                result = m_iCore.CreateTextureView(viewDesc, imguiTexture.descriptor);
                 NRI_CHECK(result == Result::SUCCESS, "Unexpected");
             }
 

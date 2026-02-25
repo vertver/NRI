@@ -52,9 +52,7 @@ struct DescriptorD3D12 final : public DebugNameBase {
     }
 
     Result Create(const BufferViewDesc& bufferViewDesc);
-    Result Create(const Texture1DViewDesc& textureViewDesc);
-    Result Create(const Texture2DViewDesc& textureViewDesc);
-    Result Create(const Texture3DViewDesc& textureViewDesc);
+    Result Create(const TextureViewDesc& textureViewDesc);
     Result Create(const AccelerationStructureD3D12& accelerationStructure);
     Result Create(const SamplerDesc& samplerDesc);
 

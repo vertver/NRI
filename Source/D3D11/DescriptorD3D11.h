@@ -46,9 +46,7 @@ struct DescriptorD3D11 final : public DebugNameBase {
     }
 #endif
 
-    Result Create(const Texture1DViewDesc& textureViewDesc);
-    Result Create(const Texture2DViewDesc& textureViewDesc);
-    Result Create(const Texture3DViewDesc& textureViewDesc);
+    Result Create(const TextureViewDesc& textureViewDesc);
     Result Create(const BufferViewDesc& bufferViewDesc);
     Result Create(const SamplerDesc& samplerDesc);
 

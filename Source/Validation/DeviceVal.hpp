@@ -45,56 +45,54 @@ static inline Dim_t GetMaxMipNum(uint16_t w, uint16_t h, uint16_t d) {
     return mipNum;
 }
 
-static inline bool IsViewTypeSupported(const TextureDesc& textureDesc, Texture1DViewType viewType) {
-    switch (viewType) {
-        case Texture1DViewType::SHADER_RESOURCE:
-        case Texture1DViewType::SHADER_RESOURCE_ARRAY:
-            return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE) != 0;
-        case Texture1DViewType::SHADER_RESOURCE_STORAGE:
-        case Texture1DViewType::SHADER_RESOURCE_STORAGE_ARRAY:
-            return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE_STORAGE) != 0;
-        case Texture1DViewType::COLOR_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::COLOR_ATTACHMENT) != 0;
-        case Texture1DViewType::DEPTH_STENCIL_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::DEPTH_STENCIL_ATTACHMENT) != 0;
-        default:
-            return false;
-    }
-}
-
-static inline bool IsViewTypeSupported(const TextureDesc& textureDesc, Texture2DViewType viewType) {
-    switch (viewType) {
-        case Texture2DViewType::SHADER_RESOURCE:
-        case Texture2DViewType::SHADER_RESOURCE_ARRAY:
-        case Texture2DViewType::SHADER_RESOURCE_CUBE:
-        case Texture2DViewType::SHADER_RESOURCE_CUBE_ARRAY:
-            return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE) != 0;
-        case Texture2DViewType::SHADER_RESOURCE_STORAGE:
-        case Texture2DViewType::SHADER_RESOURCE_STORAGE_ARRAY:
-            return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE_STORAGE) != 0;
-        case Texture2DViewType::INPUT_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::INPUT_ATTACHMENT) != 0;
-        case Texture2DViewType::COLOR_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::COLOR_ATTACHMENT) != 0;
-        case Texture2DViewType::DEPTH_STENCIL_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::DEPTH_STENCIL_ATTACHMENT) != 0;
-        case Texture2DViewType::SHADING_RATE_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::SHADING_RATE_ATTACHMENT) != 0;
-        default:
-            return false;
-    }
-}
-
-static inline bool IsViewTypeSupported(const TextureDesc& textureDesc, Texture3DViewType viewType) {
-    switch (viewType) {
-        case Texture3DViewType::SHADER_RESOURCE:
-            return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE) != 0;
-        case Texture3DViewType::SHADER_RESOURCE_STORAGE:
-            return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE_STORAGE) != 0;
-        case Texture3DViewType::COLOR_ATTACHMENT:
-            return (textureDesc.usage & TextureUsageBits::COLOR_ATTACHMENT) != 0;
-        default:
-            return false;
+static inline bool IsViewTypeSupported(const TextureDesc& textureDesc, TextureView textureView) {
+    if (textureDesc.type == TextureType::TEXTURE_1D) {
+        switch (textureView) {
+            case TextureView::TEXTURE:
+            case TextureView::TEXTURE_ARRAY:
+                return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE) != 0;
+            case TextureView::STORAGE_TEXTURE:
+            case TextureView::STORAGE_TEXTURE_ARRAY:
+                return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE_STORAGE) != 0;
+            case TextureView::COLOR_ATTACHMENT:
+                return (textureDesc.usage & TextureUsageBits::COLOR_ATTACHMENT) != 0;
+            case TextureView::DEPTH_STENCIL_ATTACHMENT:
+                return (textureDesc.usage & TextureUsageBits::DEPTH_STENCIL_ATTACHMENT) != 0;
+            default:
+                return false;
+        }
+    } else if (textureDesc.type == TextureType::TEXTURE_2D) {
+        switch (textureView) {
+            case TextureView::TEXTURE:
+            case TextureView::TEXTURE_ARRAY:
+            case TextureView::TEXTURE_CUBE:
+            case TextureView::TEXTURE_CUBE_ARRAY:
+                return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE) != 0;
+            case TextureView::STORAGE_TEXTURE:
+            case TextureView::STORAGE_TEXTURE_ARRAY:
+                return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE_STORAGE) != 0;
+            case TextureView::SUBPASS_INPUT:
+                return (textureDesc.usage & TextureUsageBits::INPUT_ATTACHMENT) != 0;
+            case TextureView::COLOR_ATTACHMENT:
+                return (textureDesc.usage & TextureUsageBits::COLOR_ATTACHMENT) != 0;
+            case TextureView::DEPTH_STENCIL_ATTACHMENT:
+                return (textureDesc.usage & TextureUsageBits::DEPTH_STENCIL_ATTACHMENT) != 0;
+            case TextureView::SHADING_RATE_ATTACHMENT:
+                return (textureDesc.usage & TextureUsageBits::SHADING_RATE_ATTACHMENT) != 0;
+            default:
+                return false;
+        }
+    } else {
+        switch (textureView) {
+            case TextureView::TEXTURE:
+                return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE) != 0;
+            case TextureView::STORAGE_TEXTURE:
+                return (textureDesc.usage & TextureUsageBits::SHADER_RESOURCE_STORAGE) != 0;
+            case TextureView::COLOR_ATTACHMENT:
+                return (textureDesc.usage & TextureUsageBits::COLOR_ATTACHMENT) != 0;
+            default:
+                return false;
+        }
     }
 }
 
@@ -257,7 +255,7 @@ NRI_INLINE Result DeviceVal::CreateTexture(const TextureDesc& textureDesc, Textu
 NRI_INLINE Result DeviceVal::CreateDescriptor(const BufferViewDesc& bufferViewDesc, Descriptor*& bufferView) {
     NRI_RETURN_ON_FAILURE(this, bufferViewDesc.buffer != nullptr, Result::INVALID_ARGUMENT, "'buffer' is NULL");
     NRI_RETURN_ON_FAILURE(this, bufferViewDesc.format < Format::MAX_NUM, Result::INVALID_ARGUMENT, "'format' is invalid");
-    NRI_RETURN_ON_FAILURE(this, bufferViewDesc.viewType < BufferViewType::MAX_NUM, Result::INVALID_ARGUMENT, "'viewType' is invalid");
+    NRI_RETURN_ON_FAILURE(this, bufferViewDesc.type < BufferView::MAX_NUM, Result::INVALID_ARGUMENT, "'viewType' is invalid");
 
     const BufferVal& bufferVal = *(BufferVal*)bufferViewDesc.buffer;
     const BufferDesc& bufferDesc = bufferVal.GetDesc();
@@ -265,10 +263,10 @@ NRI_INLINE Result DeviceVal::CreateDescriptor(const BufferViewDesc& bufferViewDe
     NRI_RETURN_ON_FAILURE(this, bufferVal.IsBoundToMemory(), Result::INVALID_ARGUMENT, "'bufferViewDesc.buffer' is not bound to memory");
     NRI_RETURN_ON_FAILURE(this, bufferViewDesc.offset + bufferViewDesc.size <= bufferDesc.size, Result::INVALID_ARGUMENT, "'offset=%" PRIu64 "' + 'size=%" PRIu64 "' must be <= buffer 'size=%" PRIu64 "'", bufferViewDesc.offset, bufferViewDesc.size, bufferDesc.size);
 
-    if (bufferViewDesc.viewType != BufferViewType::SHADER_RESOURCE_STRUCTURED && bufferViewDesc.viewType != BufferViewType::SHADER_RESOURCE_STORAGE_STRUCTURED)
+    if (bufferViewDesc.type != BufferView::STRUCTURED_BUFFER && bufferViewDesc.type != BufferView::STORAGE_STRUCTURED_BUFFER)
         NRI_RETURN_ON_FAILURE(this, bufferViewDesc.structureStride == 0, Result::INVALID_ARGUMENT, "'structureStride' must be 0 for non-structured views");
 
-    if (bufferViewDesc.viewType != BufferViewType::SHADER_RESOURCE && bufferViewDesc.viewType != BufferViewType::SHADER_RESOURCE_STORAGE) {
+    if (bufferViewDesc.type != BufferView::BUFFER && bufferViewDesc.type != BufferView::STORAGE_BUFFER) {
         NRI_RETURN_ON_FAILURE(this, bufferViewDesc.format == Format::UNKNOWN, Result::INVALID_ARGUMENT, "'format' must be 'UNKNOWN' for non-typed views");
     } else {
         NRI_RETURN_ON_FAILURE(this, bufferViewDesc.format != Format::UNKNOWN, Result::INVALID_ARGUMENT, "'format' must not be 'UNKNOWN' for typed views");
@@ -287,85 +285,34 @@ NRI_INLINE Result DeviceVal::CreateDescriptor(const BufferViewDesc& bufferViewDe
     return result;
 }
 
-NRI_INLINE Result DeviceVal::CreateDescriptor(const Texture1DViewDesc& textureViewDesc, Descriptor*& textureView) {
+NRI_INLINE Result DeviceVal::CreateDescriptor(const TextureViewDesc& textureViewDesc, Descriptor*& textureView) {
     NRI_RETURN_ON_FAILURE(this, textureViewDesc.texture != nullptr, Result::INVALID_ARGUMENT, "'texture' is NULL");
     NRI_RETURN_ON_FAILURE(this, textureViewDesc.format > Format::UNKNOWN && textureViewDesc.format < Format::MAX_NUM, Result::INVALID_ARGUMENT, "'format' is invalid");
 
     const TextureVal& textureVal = *(TextureVal*)textureViewDesc.texture;
     const TextureDesc& textureDesc = textureVal.GetDesc();
 
+    Dim_t mipNum = textureViewDesc.mipNum == REMAINING ? (textureDesc.mipNum - textureViewDesc.mipOffset) : textureViewDesc.mipNum;
+    Dim_t layerNum = textureViewDesc.layerNum == REMAINING ? (textureDesc.layerNum - textureViewDesc.layerOffset) : textureViewDesc.layerNum;
+    Dim_t sliceNum = textureViewDesc.sliceNum == REMAINING ? (textureDesc.depth - textureViewDesc.sliceOffset) : textureViewDesc.sliceNum;
+
     NRI_RETURN_ON_FAILURE(this, textureVal.IsBoundToMemory(), Result::INVALID_ARGUMENT, "'textureViewDesc.texture' is not bound to memory");
-    NRI_RETURN_ON_FAILURE(this, IsViewTypeSupported(textureDesc, textureViewDesc.viewType), Result::INVALID_ARGUMENT, "'viewType' is not supported by the texture usage");
+    NRI_RETURN_ON_FAILURE(this, IsViewTypeSupported(textureDesc, textureViewDesc.type), Result::INVALID_ARGUMENT, "'viewType' is not supported by the texture (type or usage)");
 
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.mipOffset + textureViewDesc.mipNum <= textureDesc.mipNum, Result::INVALID_ARGUMENT,
-        "'mipOffset=%u' + 'mipNum=%u' must be <= texture 'mipNum=%u'", textureViewDesc.mipOffset, textureViewDesc.mipNum, textureDesc.mipNum);
+    NRI_RETURN_ON_FAILURE(this, textureViewDesc.mipOffset + mipNum <= textureDesc.mipNum, Result::INVALID_ARGUMENT,
+        "'mipOffset=%u' + 'mipNum=%u' must be <= texture 'mipNum=%u'", textureViewDesc.mipOffset, mipNum, textureDesc.mipNum);
 
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.layerOffset + textureViewDesc.layerNum <= textureDesc.layerNum, Result::INVALID_ARGUMENT,
-        "'layerOffset=%u' + 'layerNum=%u' must be <= texture 'layerNum=%u'", textureViewDesc.layerOffset, textureViewDesc.layerNum, textureDesc.layerNum);
+    NRI_RETURN_ON_FAILURE(this, textureViewDesc.layerOffset + layerNum <= textureDesc.layerNum, Result::INVALID_ARGUMENT,
+        "'layerOffset=%u' + 'layerNum=%u' must be <= texture 'layerNum=%u'", textureViewDesc.layerOffset, layerNum, textureDesc.layerNum);
+
+    NRI_RETURN_ON_FAILURE(this, textureViewDesc.sliceOffset + sliceNum <= textureDesc.depth, Result::INVALID_ARGUMENT,
+        "'sliceOffset=%u' + 'sliceNum=%u' must be <= texture 'depth=%u'", textureViewDesc.sliceOffset, sliceNum, textureDesc.depth);
 
     auto textureViewDescImpl = textureViewDesc;
     textureViewDescImpl.texture = NRI_GET_IMPL(Texture, textureViewDesc.texture);
 
     Descriptor* descriptorImpl = nullptr;
-    Result result = m_iCoreImpl.CreateTexture1DView(textureViewDescImpl, descriptorImpl);
-
-    textureView = nullptr;
-    if (result == Result::SUCCESS)
-        textureView = (Descriptor*)Allocate<DescriptorVal>(GetAllocationCallbacks(), *this, descriptorImpl, textureViewDesc);
-
-    return result;
-}
-
-NRI_INLINE Result DeviceVal::CreateDescriptor(const Texture2DViewDesc& textureViewDesc, Descriptor*& textureView) {
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.texture != nullptr, Result::INVALID_ARGUMENT, "'texture' is NULL");
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.format > Format::UNKNOWN && textureViewDesc.format < Format::MAX_NUM, Result::INVALID_ARGUMENT, "'format' is invalid");
-
-    const TextureVal& textureVal = *(TextureVal*)textureViewDesc.texture;
-    const TextureDesc& textureDesc = textureVal.GetDesc();
-
-    NRI_RETURN_ON_FAILURE(this, textureVal.IsBoundToMemory(), Result::INVALID_ARGUMENT, "'textureViewDesc.texture' is not bound to memory");
-    NRI_RETURN_ON_FAILURE(this, IsViewTypeSupported(textureDesc, textureViewDesc.viewType), Result::INVALID_ARGUMENT, "'viewType' is not supported by the texture usage");
-
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.mipOffset + textureViewDesc.mipNum <= textureDesc.mipNum, Result::INVALID_ARGUMENT,
-        "'mipOffset=%u' + 'mipNum=%u' must be <= texture 'mipNum=%u'", textureViewDesc.mipOffset, textureViewDesc.mipNum, textureDesc.mipNum);
-
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.layerOffset + textureViewDesc.layerNum <= textureDesc.layerNum, Result::INVALID_ARGUMENT,
-        "'layerOffset=%u' + 'layerNum=%u' must be <= texture 'layerNum=%u'", textureViewDesc.layerOffset, textureViewDesc.layerNum, textureDesc.layerNum);
-
-    auto textureViewDescImpl = textureViewDesc;
-    textureViewDescImpl.texture = NRI_GET_IMPL(Texture, textureViewDesc.texture);
-
-    Descriptor* descriptorImpl = nullptr;
-    Result result = m_iCoreImpl.CreateTexture2DView(textureViewDescImpl, descriptorImpl);
-
-    textureView = nullptr;
-    if (result == Result::SUCCESS)
-        textureView = (Descriptor*)Allocate<DescriptorVal>(GetAllocationCallbacks(), *this, descriptorImpl, textureViewDesc);
-
-    return result;
-}
-
-NRI_INLINE Result DeviceVal::CreateDescriptor(const Texture3DViewDesc& textureViewDesc, Descriptor*& textureView) {
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.texture != nullptr, Result::INVALID_ARGUMENT, "'texture' is NULL");
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.format > Format::UNKNOWN && textureViewDesc.format < Format::MAX_NUM, Result::INVALID_ARGUMENT, "'format' is invalid");
-
-    const TextureVal& textureVal = *(TextureVal*)textureViewDesc.texture;
-    const TextureDesc& textureDesc = textureVal.GetDesc();
-
-    NRI_RETURN_ON_FAILURE(this, textureVal.IsBoundToMemory(), Result::INVALID_ARGUMENT, "'textureViewDesc.texture' is not bound to memory");
-    NRI_RETURN_ON_FAILURE(this, IsViewTypeSupported(textureDesc, textureViewDesc.viewType), Result::INVALID_ARGUMENT, "'viewType' is not supported by the texture usage");
-
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.mipOffset + textureViewDesc.mipNum <= textureDesc.mipNum, Result::INVALID_ARGUMENT,
-        "'mipOffset=%u' + 'mipNum=%u' must be <= texture 'mipNum=%u'", textureViewDesc.mipOffset, textureViewDesc.mipNum, textureDesc.mipNum);
-
-    NRI_RETURN_ON_FAILURE(this, textureViewDesc.sliceOffset + textureViewDesc.sliceNum <= textureDesc.depth, Result::INVALID_ARGUMENT,
-        "'sliceOffset=%u' + 'sliceNum=%u' must be <= texture 'depth=%u'", textureViewDesc.sliceOffset, textureViewDesc.sliceNum, textureDesc.depth);
-
-    auto textureViewDescImpl = textureViewDesc;
-    textureViewDescImpl.texture = NRI_GET_IMPL(Texture, textureViewDesc.texture);
-
-    Descriptor* descriptorImpl = nullptr;
-    Result result = m_iCoreImpl.CreateTexture3DView(textureViewDescImpl, descriptorImpl);
+    Result result = m_iCoreImpl.CreateTextureView(textureViewDescImpl, descriptorImpl);
 
     textureView = nullptr;
     if (result == Result::SUCCESS)

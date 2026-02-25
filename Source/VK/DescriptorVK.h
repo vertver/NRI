@@ -67,9 +67,7 @@ struct DescriptorVK final : public DebugNameBase {
     ~DescriptorVK();
 
     Result Create(const BufferViewDesc& bufferViewDesc);
-    Result Create(const Texture1DViewDesc& textureViewDesc);
-    Result Create(const Texture2DViewDesc& textureViewDesc);
-    Result Create(const Texture3DViewDesc& textureViewDesc);
+    Result Create(const TextureViewDesc& textureViewDesc);
     Result Create(const SamplerDesc& samplerDesc);
     Result Create(VkAccelerationStructureKHR accelerationStructure);
 
@@ -78,11 +76,6 @@ struct DescriptorVK final : public DebugNameBase {
     //================================================================================================================
 
     void SetDebugName(const char* name) NRI_DEBUG_NAME_OVERRIDE;
-
-private:
-    Result CreateTextureView(const Texture1DViewDesc& textureViewDesc);
-    Result CreateTextureView(const Texture2DViewDesc& textureViewDesc);
-    Result CreateTextureView(const Texture3DViewDesc& textureViewDesc);
 
 private:
     DeviceVK& m_Device;
