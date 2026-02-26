@@ -235,18 +235,19 @@ static uint32_t AddResourceBarrier(D3D12_COMMAND_LIST_TYPE commandListType, ID3D
     D3D12_RESOURCE_STATES resourceStateAfter = GetResourceStates(after, commandListType);
 
     if (resourceStateBefore == resourceStateAfter) {
-        if (resourceStateBefore != D3D12_RESOURCE_STATE_UNORDERED_ACCESS) {
+        if (resourceStateBefore != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
             return 0;
-        }
+
         resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         resourceBarrier.UAV.pResource = resource;
+    } else {
+        resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        resourceBarrier.Transition.pResource = resource;
+        resourceBarrier.Transition.StateBefore = resourceStateBefore;
+        resourceBarrier.Transition.StateAfter = resourceStateAfter;
+        resourceBarrier.Transition.Subresource = subresource;
     }
 
-    resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resourceBarrier.Transition.pResource = resource;
-    resourceBarrier.Transition.StateBefore = resourceStateBefore;
-    resourceBarrier.Transition.StateAfter = resourceStateAfter;
-    resourceBarrier.Transition.Subresource = subresource;
     return 1;
 }
 
@@ -1097,7 +1098,7 @@ NRI_INLINE void CommandBufferD3D12::Barrier(const BarrierDesc& barrierDesc) {
 
         for (uint32_t i = 0; i < barrierDesc.bufferNum; i++) {
             const BufferBarrierDesc& barrier = barrierDesc.buffers[i];
-            ptr += AddResourceBarrier(commandListType, *((BufferD3D12*)barrier.buffer), barrier.before.access, barrier.after.access, *ptr, 0); 
+            ptr += AddResourceBarrier(commandListType, *((BufferD3D12*)barrier.buffer), barrier.before.access, barrier.after.access, *ptr, 0);
         }
 
         for (uint32_t i = 0; i < barrierDesc.textureNum; i++) {
