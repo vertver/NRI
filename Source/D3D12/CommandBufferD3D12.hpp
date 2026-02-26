@@ -1020,7 +1020,10 @@ NRI_INLINE void CommandBufferD3D12::Barrier(const BarrierDesc& barrierDesc) {
             for (uint32_t i = 0; i < barrierDesc.textureNum; i++) {
                 const TextureBarrierDesc& in = barrierDesc.textures[i];
                 const TextureD3D12& texture = *(TextureD3D12*)in.texture;
-                const TextureDesc& desc = texture.GetDesc();
+                const TextureDesc& textureDesc = texture.GetDesc();
+
+                Dim_t mipNum = in.mipNum == REMAINING ? (textureDesc.mipNum - in.mipOffset) : in.mipNum;
+                Dim_t layerNum = in.layerNum == REMAINING ? (textureDesc.layerNum - in.layerOffset) : in.layerNum;
 
                 D3D12_TEXTURE_BARRIER& out = textureBarriers[i];
                 out = {};
@@ -1032,11 +1035,11 @@ NRI_INLINE void CommandBufferD3D12::Barrier(const BarrierDesc& barrierDesc) {
                 out.LayoutAfter = GetBarrierLayout(in.after.layout, in.after.access);
                 out.pResource = texture;
                 out.Subresources.IndexOrFirstMipLevel = in.mipOffset;
-                out.Subresources.NumMipLevels = in.mipNum == REMAINING ? desc.mipNum : in.mipNum;
+                out.Subresources.NumMipLevels = mipNum;
                 out.Subresources.FirstArraySlice = in.layerOffset;
-                out.Subresources.NumArraySlices = in.layerNum == REMAINING ? desc.layerNum : in.layerNum;
+                out.Subresources.NumArraySlices = layerNum;
 
-                const FormatProps& formatProps = GetFormatProps(desc.format);
+                const FormatProps& formatProps = GetFormatProps(textureDesc.format);
                 if (in.planes == PlaneBits::ALL || (in.planes & PlaneBits::STENCIL)) { // fallthrough
                     out.Subresources.NumPlanes += formatProps.isStencil ? 1 : 0;
                     out.Subresources.FirstPlane = 1;
@@ -1067,10 +1070,11 @@ NRI_INLINE void CommandBufferD3D12::Barrier(const BarrierDesc& barrierDesc) {
             const TextureBarrierDesc& barrier = barrierDesc.textures[i];
             const TextureD3D12& texture = *(TextureD3D12*)barrier.texture;
             const TextureDesc& textureDesc = texture.GetDesc();
-            const Dim_t layerNum = barrier.layerNum == REMAINING ? textureDesc.layerNum : barrier.layerNum;
-            const Dim_t mipNum = barrier.mipNum == REMAINING ? textureDesc.mipNum : barrier.mipNum;
 
-            if (barrier.layerOffset == 0 && layerNum == textureDesc.layerNum && barrier.mipOffset == 0 && mipNum == textureDesc.mipNum)
+            Dim_t mipNum = barrier.mipNum == REMAINING ? (textureDesc.mipNum - barrier.mipOffset) : barrier.mipNum;
+            Dim_t layerNum = barrier.layerNum == REMAINING ? (textureDesc.layerNum - barrier.layerOffset) : barrier.layerNum;
+
+            if (layerNum == textureDesc.layerNum && mipNum == textureDesc.mipNum && barrier.planes == PlaneBits::ALL)
                 barrierNum++;
             else
                 barrierNum += layerNum * mipNum;
@@ -1105,15 +1109,16 @@ NRI_INLINE void CommandBufferD3D12::Barrier(const BarrierDesc& barrierDesc) {
             const TextureBarrierDesc& barrier = barrierDesc.textures[i];
             const TextureD3D12& texture = *(TextureD3D12*)barrier.texture;
             const TextureDesc& textureDesc = texture.GetDesc();
-            const Dim_t layerNum = barrier.layerNum == REMAINING ? textureDesc.layerNum : barrier.layerNum;
-            const Dim_t mipNum = barrier.mipNum == REMAINING ? textureDesc.mipNum : barrier.mipNum;
 
-            if (barrier.layerOffset == 0 && layerNum == textureDesc.layerNum && barrier.mipOffset == 0 && mipNum == textureDesc.mipNum && barrier.planes == PlaneBits::ALL)
+            Dim_t mipNum = barrier.mipNum == REMAINING ? (textureDesc.mipNum - barrier.mipOffset) : barrier.mipNum;
+            Dim_t layerNum = barrier.layerNum == REMAINING ? (textureDesc.layerNum - barrier.layerOffset) : barrier.layerNum;
+
+            if (layerNum == textureDesc.layerNum && mipNum == textureDesc.mipNum && barrier.planes == PlaneBits::ALL)
                 ptr += AddResourceBarrier(commandListType, texture, barrier.before.access, barrier.after.access, *ptr, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
             else {
-                for (Dim_t layerOffset = barrier.layerOffset; layerOffset < barrier.layerOffset + layerNum; layerOffset++) {
-                    for (Dim_t mipOffset = barrier.mipOffset; mipOffset < barrier.mipOffset + mipNum; mipOffset++) {
-                        uint32_t subresource = GetSubresourceIndex(layerOffset, textureDesc.layerNum, mipOffset, textureDesc.mipNum, barrier.planes);
+                for (Dim_t layer = 0; layer < layerNum; layer++) {
+                    for (Dim_t mip = 0; mip < mipNum; mip++) {
+                        uint32_t subresource = GetSubresourceIndex(barrier.layerOffset + layer, textureDesc.layerNum, barrier.mipOffset + mip, textureDesc.mipNum, barrier.planes);
                         ptr += AddResourceBarrier(commandListType, texture, barrier.before.access, barrier.after.access, *ptr, subresource);
                     }
                 }
