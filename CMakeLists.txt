@@ -34,8 +34,8 @@ endif()
 
 # Options
 set(NRI_AGILITY_SDK_DIR "AgilitySDK" CACHE STRING "Directory where Agility SDK will be copied relative to the directory with binaries")
-set(NRI_AGILITY_SDK_VERSION_MAJOR "618" CACHE STRING "Agility SDK major version") # 717 ("D3D12_ERROR_INVALID_REDIST" if Windows developer mode is not enabled)
-set(NRI_AGILITY_SDK_VERSION_MINOR "5" CACHE STRING "Agility SDK minor version") # 1-preview
+set(NRI_AGILITY_SDK_VERSION_MAJOR "619" CACHE STRING "Agility SDK major version") # 719 ("D3D12_ERROR_INVALID_REDIST" if Windows developer mode is not enabled)
+set(NRI_AGILITY_SDK_VERSION_MINOR "0" CACHE STRING "Agility SDK minor version") # 0-preview
 set(NRI_SHADERS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/_Shaders" CACHE STRING "Shader output path override")
 set(NRI_NVAPI_CUSTOM_PATH "" CACHE STRING "Path to a custom NVAPI library directory")
 
