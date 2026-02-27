@@ -1544,11 +1544,11 @@ NriStruct(PipelineStatisticsDesc) {
     uint64_t computeShaderInvocationNum;
 
     // If "features.meshShaderPipelineStats"
-    uint64_t meshControlShaderInvocationNum;
-    uint64_t meshEvaluationShaderInvocationNum;
+    uint64_t taskShaderInvocationNum;
+    uint64_t meshShaderInvocationNum;
 
     // D3D12: if "features.meshShaderPipelineStats"
-    uint64_t meshEvaluationShaderPrimitiveNum;
+    uint64_t meshShaderPrimitiveNum;
 };
 
 #pragma endregion
@@ -1860,37 +1860,45 @@ NriStruct(DeviceDesc) {
         //    - active: the "lane" is performing its computations
         //    - inactive: the "lane" is part of the "wave" but is currently masked out
         //    - helper: these "lanes" are executed to provide auxiliary information (like derivatives) for active threads in the same 2x2 quad
-        //  - "invocation" or "thread" is the more general term for a single shader instance, "lane" specifically refers to the position of that thread within a hardware "wave"
+        //  - "invocation" (or "thread") is a single shader instance
+        //  - "lane" specifically refers to the position of a "thread" within a hardware "wave"
         //  - the concept of "wave/lane" execution applies to all shader stages
         struct {
-            uint32_t workGroupMaxNum[3];
+            uint32_t dispatchMaxDim[3];
             uint32_t workGroupMaxDim[3];
             uint32_t workGroupInvocationMaxNum;
             uint32_t sharedMemoryMaxSize;
         } compute;
 
-        // Ray tracing
+        // Task
         struct {
-            uint32_t shaderGroupIdentifierSize;
-            uint32_t tableMaxStride;
-            uint32_t recursionMaxDepth;
-        } rayTracing;
-
-        // Mesh control
-        struct {
-            uint32_t sharedMemoryMaxSize;
+            uint32_t workGroupMaxTotal;
+            uint32_t dispatchMaxDim[3];
+            uint32_t workGroupMaxDim[3];
             uint32_t workGroupInvocationMaxNum;
+            uint32_t sharedMemoryMaxSize;
             uint32_t payloadMaxSize;
-        } meshControl;
+        } task;
 
-        // Mesh evaluation
+        // Mesh
         struct {
+            uint32_t workGroupMaxTotal;
+            uint32_t dispatchMaxDim[3];
+            uint32_t workGroupMaxDim[3];
+            uint32_t workGroupInvocationMaxNum;
+            uint32_t sharedMemoryMaxSize;
             uint32_t outputVerticesMaxNum;
             uint32_t outputPrimitiveMaxNum;
             uint32_t outputComponentMaxNum;
-            uint32_t sharedMemoryMaxSize;
-            uint32_t workGroupInvocationMaxNum;
-        } meshEvaluation;
+        } mesh;
+
+        // Ray tracing
+        struct {
+            uint32_t shaderGroupIdentifierSize;
+            uint32_t shaderBindingTableMaxStride;
+            uint32_t recursionMaxDepth;
+            uint32_t micromapSubdivisionMaxLevel;
+        } rayTracing;
     } shaderStage;
 
     // Wave (subgroup)
@@ -1907,7 +1915,6 @@ NriStruct(DeviceDesc) {
     // Other
     struct {
         uint64_t timestampFrequencyHz;
-        uint32_t micromapSubdivisionMaxLevel;
         uint32_t drawIndirectMaxNum;
         float samplerLodBiasMax;
         float samplerAnisotropyMax;

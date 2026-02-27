@@ -1009,28 +1009,42 @@ Result DeviceVK::Create(const DeviceCreationDesc& desc, const DeviceCreationVKDe
         m_Desc.shaderStage.fragment.attachmentMaxNum = limits.maxFragmentOutputAttachments;
         m_Desc.shaderStage.fragment.dualSourceAttachmentMaxNum = limits.maxFragmentDualSrcAttachments;
 
-        m_Desc.shaderStage.compute.workGroupMaxNum[0] = limits.maxComputeWorkGroupCount[0];
-        m_Desc.shaderStage.compute.workGroupMaxNum[1] = limits.maxComputeWorkGroupCount[1];
-        m_Desc.shaderStage.compute.workGroupMaxNum[2] = limits.maxComputeWorkGroupCount[2];
+        m_Desc.shaderStage.compute.dispatchMaxDim[0] = limits.maxComputeWorkGroupCount[0];
+        m_Desc.shaderStage.compute.dispatchMaxDim[1] = limits.maxComputeWorkGroupCount[1];
+        m_Desc.shaderStage.compute.dispatchMaxDim[2] = limits.maxComputeWorkGroupCount[2];
         m_Desc.shaderStage.compute.workGroupMaxDim[0] = limits.maxComputeWorkGroupSize[0];
         m_Desc.shaderStage.compute.workGroupMaxDim[1] = limits.maxComputeWorkGroupSize[1];
         m_Desc.shaderStage.compute.workGroupMaxDim[2] = limits.maxComputeWorkGroupSize[2];
         m_Desc.shaderStage.compute.workGroupInvocationMaxNum = limits.maxComputeWorkGroupInvocations;
         m_Desc.shaderStage.compute.sharedMemoryMaxSize = limits.maxComputeSharedMemorySize;
 
+        m_Desc.shaderStage.task.workGroupMaxTotal = MeshShaderProps.maxTaskWorkGroupTotalCount;
+        m_Desc.shaderStage.task.dispatchMaxDim[0] = MeshShaderProps.maxTaskWorkGroupCount[0];
+        m_Desc.shaderStage.task.dispatchMaxDim[1] = MeshShaderProps.maxTaskWorkGroupCount[1];
+        m_Desc.shaderStage.task.dispatchMaxDim[2] = MeshShaderProps.maxTaskWorkGroupCount[2];
+        m_Desc.shaderStage.task.workGroupMaxDim[0] = MeshShaderProps.maxTaskWorkGroupSize[0];
+        m_Desc.shaderStage.task.workGroupMaxDim[1] = MeshShaderProps.maxTaskWorkGroupSize[1];
+        m_Desc.shaderStage.task.workGroupMaxDim[2] = MeshShaderProps.maxTaskWorkGroupSize[2];
+        m_Desc.shaderStage.task.workGroupInvocationMaxNum = MeshShaderProps.maxTaskWorkGroupInvocations;
+        m_Desc.shaderStage.task.sharedMemoryMaxSize = MeshShaderProps.maxTaskSharedMemorySize;
+        m_Desc.shaderStage.task.payloadMaxSize = MeshShaderProps.maxTaskPayloadSize;
+
+        m_Desc.shaderStage.mesh.dispatchMaxDim[0] = MeshShaderProps.maxMeshWorkGroupCount[0];
+        m_Desc.shaderStage.mesh.dispatchMaxDim[1] = MeshShaderProps.maxMeshWorkGroupCount[1];
+        m_Desc.shaderStage.mesh.dispatchMaxDim[2] = MeshShaderProps.maxMeshWorkGroupCount[2];
+        m_Desc.shaderStage.mesh.workGroupMaxDim[0] = MeshShaderProps.maxMeshWorkGroupSize[0];
+        m_Desc.shaderStage.mesh.workGroupMaxDim[1] = MeshShaderProps.maxMeshWorkGroupSize[1];
+        m_Desc.shaderStage.mesh.workGroupMaxDim[2] = MeshShaderProps.maxMeshWorkGroupSize[2];
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = MeshShaderProps.maxMeshWorkGroupInvocations;
+        m_Desc.shaderStage.mesh.sharedMemoryMaxSize = MeshShaderProps.maxMeshSharedMemorySize;
+        m_Desc.shaderStage.mesh.outputVerticesMaxNum = MeshShaderProps.maxMeshOutputVertices;
+        m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = MeshShaderProps.maxMeshOutputPrimitives;
+        m_Desc.shaderStage.mesh.outputComponentMaxNum = MeshShaderProps.maxMeshOutputComponents;
+
         m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = RayTracingPipelineProps.shaderGroupHandleSize;
-        m_Desc.shaderStage.rayTracing.tableMaxStride = RayTracingPipelineProps.maxShaderGroupStride;
+        m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = RayTracingPipelineProps.maxShaderGroupStride;
         m_Desc.shaderStage.rayTracing.recursionMaxDepth = RayTracingPipelineProps.maxRayRecursionDepth;
-
-        m_Desc.shaderStage.meshControl.sharedMemoryMaxSize = MeshShaderProps.maxTaskSharedMemorySize;
-        m_Desc.shaderStage.meshControl.workGroupInvocationMaxNum = MeshShaderProps.maxTaskWorkGroupInvocations;
-        m_Desc.shaderStage.meshControl.payloadMaxSize = MeshShaderProps.maxTaskPayloadSize;
-
-        m_Desc.shaderStage.meshEvaluation.outputVerticesMaxNum = MeshShaderProps.maxMeshOutputVertices;
-        m_Desc.shaderStage.meshEvaluation.outputPrimitiveMaxNum = MeshShaderProps.maxMeshOutputPrimitives;
-        m_Desc.shaderStage.meshEvaluation.outputComponentMaxNum = MeshShaderProps.maxMeshOutputComponents;
-        m_Desc.shaderStage.meshEvaluation.sharedMemoryMaxSize = MeshShaderProps.maxMeshSharedMemorySize;
-        m_Desc.shaderStage.meshEvaluation.workGroupInvocationMaxNum = MeshShaderProps.maxMeshWorkGroupInvocations;
+        m_Desc.shaderStage.rayTracing.micromapSubdivisionMaxLevel = OpacityMicromapProps.maxOpacity2StateSubdivisionLevel;
 
         m_Desc.wave.laneMinNum = props13.minSubgroupSize;
         m_Desc.wave.laneMaxNum = props13.maxSubgroupSize;
@@ -1074,7 +1088,6 @@ Result DeviceVK::Create(const DeviceCreationDesc& desc, const DeviceCreationVKDe
             m_Desc.wave.waveOpsStages |= StageBits::MESH_SHADER;
 
         m_Desc.other.timestampFrequencyHz = uint64_t(1e9 / double(limits.timestampPeriod) + 0.5);
-        m_Desc.other.micromapSubdivisionMaxLevel = OpacityMicromapProps.maxOpacity2StateSubdivisionLevel;
         m_Desc.other.drawIndirectMaxNum = limits.maxDrawIndirectCount;
         m_Desc.other.samplerLodBiasMax = limits.maxSamplerLodBias;
         m_Desc.other.samplerAnisotropyMax = limits.maxSamplerAnisotropy;
@@ -1143,8 +1156,8 @@ Result DeviceVK::Create(const DeviceCreationDesc& desc, const DeviceCreationVKDe
         m_Desc.features.resolveOpMinMax = m_IsSupported.maintenance10 ? true : false; // TODO: it's "all or nothing", without it "min/max" resolve is supported only in a render pass
         m_Desc.features.layerBasedMultiview = features11.multiview;
         m_Desc.features.presentFromCompute = true;
-        m_Desc.features.waitableSwapChain = PresentIdFeatures.presentId != 0 && PresentWaitFeatures.presentWait != 0;
-        m_Desc.features.resizableSwapChain = m_IsSupported.swapChainMaintenance1;
+        m_Desc.features.waitableSwapChain = m_Desc.features.swapChain != 0 && PresentIdFeatures.presentId != 0 && PresentWaitFeatures.presentWait != 0;
+        m_Desc.features.resizableSwapChain = m_Desc.features.swapChain != 0 && m_IsSupported.swapChainMaintenance1 != 0;
         m_Desc.features.pipelineStatistics = features.features.pipelineStatisticsQuery;
         m_Desc.features.rootConstantsOffset = true;
         m_Desc.features.nonConstantBufferRootDescriptorOffset = true;
