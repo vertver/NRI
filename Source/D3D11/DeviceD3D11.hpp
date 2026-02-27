@@ -460,10 +460,10 @@ void DeviceD3D11::FillDesc() {
     m_Desc.shaderStage.compute.dispatchMaxDim[0] = D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
     m_Desc.shaderStage.compute.dispatchMaxDim[1] = D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
     m_Desc.shaderStage.compute.dispatchMaxDim[2] = D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.compute.workGroupInvocationMaxNum = D3D11_CS_THREAD_GROUP_MAX_THREADS_PER_GROUP;
     m_Desc.shaderStage.compute.workGroupMaxDim[0] = D3D11_CS_THREAD_GROUP_MAX_X;
     m_Desc.shaderStage.compute.workGroupMaxDim[1] = D3D11_CS_THREAD_GROUP_MAX_Y;
     m_Desc.shaderStage.compute.workGroupMaxDim[2] = D3D11_CS_THREAD_GROUP_MAX_Z;
-    m_Desc.shaderStage.compute.workGroupInvocationMaxNum = D3D11_CS_THREAD_GROUP_MAX_THREADS_PER_GROUP;
     m_Desc.shaderStage.compute.sharedMemoryMaxSize = D3D11_CS_THREAD_LOCAL_TEMP_REGISTER_POOL;
 
     m_Desc.wave.laneMinNum = m_Desc.adapterDesc.vendor == Vendor::AMD ? 64 : 32; // TODO: yes, AMD nowadays can do 32, but 64 seems to be a more generic match

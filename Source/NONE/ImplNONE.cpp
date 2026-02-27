@@ -113,31 +113,31 @@ struct DeviceNONE final : public DeviceBase {
         m_Desc.shaderStage.compute.dispatchMaxDim[0] = (uint32_t)(-1);
         m_Desc.shaderStage.compute.dispatchMaxDim[1] = (uint32_t)(-1);
         m_Desc.shaderStage.compute.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.compute.workGroupMaxDim[0] = (uint32_t)(-1);
         m_Desc.shaderStage.compute.workGroupMaxDim[1] = (uint32_t)(-1);
         m_Desc.shaderStage.compute.workGroupMaxDim[2] = (uint32_t)(-1);
-        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.compute.sharedMemoryMaxSize = (uint32_t)(-1);
 
-        m_Desc.shaderStage.task.workGroupMaxTotal = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchWorkGroupMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.task.dispatchMaxDim[0] = (uint32_t)(-1);
         m_Desc.shaderStage.task.dispatchMaxDim[1] = (uint32_t)(-1);
         m_Desc.shaderStage.task.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupInvocationMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.task.workGroupMaxDim[0] = (uint32_t)(-1);
         m_Desc.shaderStage.task.workGroupMaxDim[1] = (uint32_t)(-1);
         m_Desc.shaderStage.task.workGroupMaxDim[2] = (uint32_t)(-1);
-        m_Desc.shaderStage.task.workGroupInvocationMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.task.sharedMemoryMaxSize = (uint32_t)(-1);
         m_Desc.shaderStage.task.payloadMaxSize = (uint32_t)(-1);
 
-        m_Desc.shaderStage.mesh.workGroupMaxTotal = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchWorkGroupMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.dispatchMaxDim[0] = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.dispatchMaxDim[1] = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.workGroupMaxDim[0] = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.workGroupMaxDim[1] = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.workGroupMaxDim[2] = (uint32_t)(-1);
-        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.sharedMemoryMaxSize = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.outputVerticesMaxNum = (uint32_t)(-1);
         m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = (uint32_t)(-1);

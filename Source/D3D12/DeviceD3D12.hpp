@@ -732,32 +732,32 @@ void DeviceD3D12::FillDesc(bool disableD3D12EnhancedBarrier) {
     m_Desc.shaderStage.compute.dispatchMaxDim[0] = std::max(m_Desc.shaderStage.compute.dispatchMaxDim[0], (uint32_t)D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
     m_Desc.shaderStage.compute.dispatchMaxDim[1] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
     m_Desc.shaderStage.compute.dispatchMaxDim[2] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.compute.workGroupInvocationMaxNum = D3D12_CS_THREAD_GROUP_MAX_THREADS_PER_GROUP;
     m_Desc.shaderStage.compute.workGroupMaxDim[0] = D3D12_CS_THREAD_GROUP_MAX_X;
     m_Desc.shaderStage.compute.workGroupMaxDim[1] = D3D12_CS_THREAD_GROUP_MAX_Y;
     m_Desc.shaderStage.compute.workGroupMaxDim[2] = D3D12_CS_THREAD_GROUP_MAX_Z;
-    m_Desc.shaderStage.compute.workGroupInvocationMaxNum = D3D12_CS_THREAD_GROUP_MAX_THREADS_PER_GROUP;
     m_Desc.shaderStage.compute.sharedMemoryMaxSize = D3D12_CS_THREAD_LOCAL_TEMP_REGISTER_POOL;
 
     // https://microsoft.github.io/DirectX-Specs/d3d/MeshShader.html#dispatchmesh-api
-    m_Desc.shaderStage.task.workGroupMaxTotal = D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID;
+    m_Desc.shaderStage.task.dispatchWorkGroupMaxNum = D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID;
     m_Desc.shaderStage.task.dispatchMaxDim[0] = std::max(m_Desc.shaderStage.task.dispatchMaxDim[0], (uint32_t)D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
     m_Desc.shaderStage.task.dispatchMaxDim[1] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
     m_Desc.shaderStage.task.dispatchMaxDim[2] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.task.workGroupInvocationMaxNum = 128;
     m_Desc.shaderStage.task.workGroupMaxDim[0] = 128;
     m_Desc.shaderStage.task.workGroupMaxDim[1] = 128;
     m_Desc.shaderStage.task.workGroupMaxDim[2] = 128;
-    m_Desc.shaderStage.task.workGroupInvocationMaxNum = 128;
     m_Desc.shaderStage.task.sharedMemoryMaxSize = D3D12_AS_TGSM_BYTES_MINIMUM_SUPPORT;
     m_Desc.shaderStage.task.payloadMaxSize = 16 * 1024;
 
-    m_Desc.shaderStage.mesh.workGroupMaxTotal = D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID;
+    m_Desc.shaderStage.mesh.dispatchWorkGroupMaxNum = D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID;
     m_Desc.shaderStage.mesh.dispatchMaxDim[0] = m_Desc.shaderStage.task.dispatchMaxDim[0];
     m_Desc.shaderStage.mesh.dispatchMaxDim[1] = m_Desc.shaderStage.task.dispatchMaxDim[1];
     m_Desc.shaderStage.mesh.dispatchMaxDim[2] = m_Desc.shaderStage.task.dispatchMaxDim[2];
+    m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = 128;
     m_Desc.shaderStage.mesh.workGroupMaxDim[0] = 128;
     m_Desc.shaderStage.mesh.workGroupMaxDim[1] = 128;
     m_Desc.shaderStage.mesh.workGroupMaxDim[2] = 128;
-    m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = 128;
     m_Desc.shaderStage.mesh.sharedMemoryMaxSize = D3D12_MS_TGSM_BYTES_MINIMUM_SUPPORT;
     m_Desc.shaderStage.mesh.outputVerticesMaxNum = 256;
     m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = 256;

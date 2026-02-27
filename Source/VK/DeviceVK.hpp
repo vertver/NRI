@@ -1012,30 +1012,31 @@ Result DeviceVK::Create(const DeviceCreationDesc& desc, const DeviceCreationVKDe
         m_Desc.shaderStage.compute.dispatchMaxDim[0] = limits.maxComputeWorkGroupCount[0];
         m_Desc.shaderStage.compute.dispatchMaxDim[1] = limits.maxComputeWorkGroupCount[1];
         m_Desc.shaderStage.compute.dispatchMaxDim[2] = limits.maxComputeWorkGroupCount[2];
+        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = limits.maxComputeWorkGroupInvocations;
         m_Desc.shaderStage.compute.workGroupMaxDim[0] = limits.maxComputeWorkGroupSize[0];
         m_Desc.shaderStage.compute.workGroupMaxDim[1] = limits.maxComputeWorkGroupSize[1];
         m_Desc.shaderStage.compute.workGroupMaxDim[2] = limits.maxComputeWorkGroupSize[2];
-        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = limits.maxComputeWorkGroupInvocations;
         m_Desc.shaderStage.compute.sharedMemoryMaxSize = limits.maxComputeSharedMemorySize;
 
-        m_Desc.shaderStage.task.workGroupMaxTotal = MeshShaderProps.maxTaskWorkGroupTotalCount;
+        m_Desc.shaderStage.task.dispatchWorkGroupMaxNum = MeshShaderProps.maxTaskWorkGroupTotalCount;
         m_Desc.shaderStage.task.dispatchMaxDim[0] = MeshShaderProps.maxTaskWorkGroupCount[0];
         m_Desc.shaderStage.task.dispatchMaxDim[1] = MeshShaderProps.maxTaskWorkGroupCount[1];
         m_Desc.shaderStage.task.dispatchMaxDim[2] = MeshShaderProps.maxTaskWorkGroupCount[2];
+        m_Desc.shaderStage.task.workGroupInvocationMaxNum = MeshShaderProps.maxTaskWorkGroupInvocations;
         m_Desc.shaderStage.task.workGroupMaxDim[0] = MeshShaderProps.maxTaskWorkGroupSize[0];
         m_Desc.shaderStage.task.workGroupMaxDim[1] = MeshShaderProps.maxTaskWorkGroupSize[1];
         m_Desc.shaderStage.task.workGroupMaxDim[2] = MeshShaderProps.maxTaskWorkGroupSize[2];
-        m_Desc.shaderStage.task.workGroupInvocationMaxNum = MeshShaderProps.maxTaskWorkGroupInvocations;
         m_Desc.shaderStage.task.sharedMemoryMaxSize = MeshShaderProps.maxTaskSharedMemorySize;
         m_Desc.shaderStage.task.payloadMaxSize = MeshShaderProps.maxTaskPayloadSize;
 
+        m_Desc.shaderStage.mesh.dispatchWorkGroupMaxNum = MeshShaderProps.maxMeshWorkGroupTotalCount;
         m_Desc.shaderStage.mesh.dispatchMaxDim[0] = MeshShaderProps.maxMeshWorkGroupCount[0];
         m_Desc.shaderStage.mesh.dispatchMaxDim[1] = MeshShaderProps.maxMeshWorkGroupCount[1];
         m_Desc.shaderStage.mesh.dispatchMaxDim[2] = MeshShaderProps.maxMeshWorkGroupCount[2];
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = MeshShaderProps.maxMeshWorkGroupInvocations;
         m_Desc.shaderStage.mesh.workGroupMaxDim[0] = MeshShaderProps.maxMeshWorkGroupSize[0];
         m_Desc.shaderStage.mesh.workGroupMaxDim[1] = MeshShaderProps.maxMeshWorkGroupSize[1];
         m_Desc.shaderStage.mesh.workGroupMaxDim[2] = MeshShaderProps.maxMeshWorkGroupSize[2];
-        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = MeshShaderProps.maxMeshWorkGroupInvocations;
         m_Desc.shaderStage.mesh.sharedMemoryMaxSize = MeshShaderProps.maxMeshSharedMemorySize;
         m_Desc.shaderStage.mesh.outputVerticesMaxNum = MeshShaderProps.maxMeshOutputVertices;
         m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = MeshShaderProps.maxMeshOutputPrimitives;

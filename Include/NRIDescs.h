@@ -1865,27 +1865,27 @@ NriStruct(DeviceDesc) {
         //  - the concept of "wave/lane" execution applies to all shader stages
         struct {
             uint32_t dispatchMaxDim[3];
-            uint32_t workGroupMaxDim[3];
             uint32_t workGroupInvocationMaxNum;
+            uint32_t workGroupMaxDim[3];
             uint32_t sharedMemoryMaxSize;
         } compute;
 
         // Task
         struct {
-            uint32_t workGroupMaxTotal;
+            uint32_t dispatchWorkGroupMaxNum;
             uint32_t dispatchMaxDim[3];
-            uint32_t workGroupMaxDim[3];
             uint32_t workGroupInvocationMaxNum;
+            uint32_t workGroupMaxDim[3];
             uint32_t sharedMemoryMaxSize;
             uint32_t payloadMaxSize;
         } task;
 
         // Mesh
         struct {
-            uint32_t workGroupMaxTotal;
+            uint32_t dispatchWorkGroupMaxNum;
             uint32_t dispatchMaxDim[3];
-            uint32_t workGroupMaxDim[3];
             uint32_t workGroupInvocationMaxNum;
+            uint32_t workGroupMaxDim[3];
             uint32_t sharedMemoryMaxSize;
             uint32_t outputVerticesMaxNum;
             uint32_t outputPrimitiveMaxNum;
