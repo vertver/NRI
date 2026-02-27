@@ -766,8 +766,12 @@ void DeviceD3D12::FillDesc(bool disableD3D12EnhancedBarrier) {
     m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = D3D12_RAYTRACING_MAX_SHADER_RECORD_STRIDE;
     m_Desc.shaderStage.rayTracing.recursionMaxDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+
+    m_Desc.accelerationStructure.primitiveMaxNum = D3D12_RAYTRACING_MAX_PRIMITIVES_PER_BOTTOM_LEVEL_ACCELERATION_STRUCTURE;
+    m_Desc.accelerationStructure.geometryMaxNum = D3D12_RAYTRACING_MAX_GEOMETRIES_PER_BOTTOM_LEVEL_ACCELERATION_STRUCTURE;
+    m_Desc.accelerationStructure.instanceMaxNum = D3D12_RAYTRACING_MAX_INSTANCES_PER_TOP_LEVEL_ACCELERATION_STRUCTURE;
 #ifdef NRI_D3D12_HAS_OPACITY_MICROMAP
-    m_Desc.shaderStage.rayTracing.micromapSubdivisionMaxLevel = D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL;
+    m_Desc.accelerationStructure.micromapSubdivisionMaxLevel = D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL;
 #endif
 
     m_Desc.wave.laneMinNum = options1.WaveLaneCountMin;

@@ -1897,9 +1897,16 @@ NriStruct(DeviceDesc) {
             uint32_t shaderGroupIdentifierSize;
             uint32_t shaderBindingTableMaxStride;
             uint32_t recursionMaxDepth;
-            uint32_t micromapSubdivisionMaxLevel;
         } rayTracing;
     } shaderStage;
+
+    // Acceleration structure
+    struct {
+        uint64_t primitiveMaxNum; // per BLAS
+        uint64_t geometryMaxNum;  // per BLAS
+        uint64_t instanceMaxNum;  // per TLAS
+        uint32_t micromapSubdivisionMaxLevel;
+    } accelerationStructure;
 
     // Wave (subgroup)
     // https://github.com/microsoft/directxshadercompiler/wiki/wave-intrinsics

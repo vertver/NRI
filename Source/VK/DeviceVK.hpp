@@ -1044,7 +1044,11 @@ Result DeviceVK::Create(const DeviceCreationDesc& desc, const DeviceCreationVKDe
         m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = RayTracingPipelineProps.shaderGroupHandleSize;
         m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = RayTracingPipelineProps.maxShaderGroupStride;
         m_Desc.shaderStage.rayTracing.recursionMaxDepth = RayTracingPipelineProps.maxRayRecursionDepth;
-        m_Desc.shaderStage.rayTracing.micromapSubdivisionMaxLevel = OpacityMicromapProps.maxOpacity2StateSubdivisionLevel;
+
+        m_Desc.accelerationStructure.primitiveMaxNum = AccelerationStructureProps.maxPrimitiveCount;
+        m_Desc.accelerationStructure.geometryMaxNum = AccelerationStructureProps.maxGeometryCount;
+        m_Desc.accelerationStructure.instanceMaxNum = AccelerationStructureProps.maxInstanceCount;
+        m_Desc.accelerationStructure.micromapSubdivisionMaxLevel = OpacityMicromapProps.maxOpacity2StateSubdivisionLevel;
 
         m_Desc.wave.laneMinNum = props13.minSubgroupSize;
         m_Desc.wave.laneMaxNum = props13.maxSubgroupSize;
