@@ -427,7 +427,8 @@ Result DescriptorD3D12::Create(const SamplerDesc& samplerDesc) {
         desc.FloatBorderColor[3] = samplerDesc.borderColor.f.w;
     }
 
-    m_Device->CreateSampler2(&desc, {m_DescriptorHandleCPU});
+    HRESULT hr = m_Device->TryCreateSampler2(&desc, {m_DescriptorHandleCPU});
+    NRI_RETURN_ON_BAD_HRESULT(&m_Device, hr, "ID3D12Device15::TryCreateSampler2");
 #else
     D3D12_SAMPLER_DESC desc = {};
     desc.Filter = GetFilter(samplerDesc);
@@ -461,7 +462,13 @@ Result DescriptorD3D12::CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIE
         return result;
 
     m_DescriptorHandleCPU = m_Device.GetDescriptorHandleCPU(m_Handle);
+
+#if NRI_ENABLE_AGILITY_SDK_SUPPORT
+    HRESULT hr = m_Device->TryCreateConstantBufferView(&desc, {m_DescriptorHandleCPU});
+    NRI_RETURN_ON_BAD_HRESULT(&m_Device, hr, "ID3D12Device15::TryCreateConstantBufferView");
+#else
     m_Device->CreateConstantBufferView(&desc, {m_DescriptorHandleCPU});
+#endif
 
     m_Type = DescriptorType::CONSTANT_BUFFER;
 
@@ -474,7 +481,13 @@ Result DescriptorD3D12::CreateShaderResourceView(ID3D12Resource* resource, const
         return result;
 
     m_DescriptorHandleCPU = m_Device.GetDescriptorHandleCPU(m_Handle);
+
+#if NRI_ENABLE_AGILITY_SDK_SUPPORT
+    HRESULT hr = m_Device->TryCreateShaderResourceView(resource, &desc, {m_DescriptorHandleCPU});
+    NRI_RETURN_ON_BAD_HRESULT(&m_Device, hr, "ID3D12Device15::TryCreateShaderResourceView");
+#else
     m_Device->CreateShaderResourceView(resource, &desc, {m_DescriptorHandleCPU});
+#endif
 
     if (desc.ViewDimension == D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE)
         m_Type = DescriptorType::ACCELERATION_STRUCTURE;
@@ -495,7 +508,13 @@ Result DescriptorD3D12::CreateUnorderedAccessView(ID3D12Resource* resource, cons
         return result;
 
     m_DescriptorHandleCPU = m_Device.GetDescriptorHandleCPU(m_Handle);
+
+#if NRI_ENABLE_AGILITY_SDK_SUPPORT
+    HRESULT hr = m_Device->TryCreateUnorderedAccessView(resource, nullptr, &desc, {m_DescriptorHandleCPU});
+    NRI_RETURN_ON_BAD_HRESULT(&m_Device, hr, "ID3D12Device15::TryCreateUnorderedAccessView");
+#else
     m_Device->CreateUnorderedAccessView(resource, nullptr, &desc, {m_DescriptorHandleCPU});
+#endif
 
     if (desc.ViewDimension == D3D12_UAV_DIMENSION_BUFFER) {
         bool isStructured = desc.Buffer.StructureByteStride != 0;
@@ -514,7 +533,13 @@ Result DescriptorD3D12::CreateRenderTargetView(ID3D12Resource* resource, const D
         return result;
 
     m_DescriptorHandleCPU = m_Device.GetDescriptorHandleCPU(m_Handle);
+
+#if NRI_ENABLE_AGILITY_SDK_SUPPORT
+    HRESULT hr = m_Device->TryCreateRenderTargetView(resource, &desc, {m_DescriptorHandleCPU});
+    NRI_RETURN_ON_BAD_HRESULT(&m_Device, hr, "ID3D12Device15::TryCreateRenderTargetView");
+#else
     m_Device->CreateRenderTargetView(resource, &desc, {m_DescriptorHandleCPU});
+#endif
 
     m_Type = DescriptorType::MAX_NUM;
 
@@ -527,7 +552,13 @@ Result DescriptorD3D12::CreateDepthStencilView(ID3D12Resource* resource, const D
         return result;
 
     m_DescriptorHandleCPU = m_Device.GetDescriptorHandleCPU(m_Handle);
+
+#if NRI_ENABLE_AGILITY_SDK_SUPPORT
+    HRESULT hr = m_Device->TryCreateDepthStencilView(resource, &desc, {m_DescriptorHandleCPU});
+    NRI_RETURN_ON_BAD_HRESULT(&m_Device, hr, "ID3D12Device15::TryCreateDepthStencilView");
+#else
     m_Device->CreateDepthStencilView(resource, &desc, {m_DescriptorHandleCPU});
+#endif
 
     m_Type = DescriptorType::MAX_NUM;
 
