@@ -110,28 +110,47 @@ struct DeviceNONE final : public DeviceBase {
         m_Desc.shaderStage.fragment.attachmentMaxNum = 8;
         m_Desc.shaderStage.fragment.dualSourceAttachmentMaxNum = 1;
 
-        m_Desc.shaderStage.compute.workGroupMaxNum[0] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxNum[1] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxNum[2] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxDim[0] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxDim[1] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxDim[2] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = 64 * 1024;
-        m_Desc.shaderStage.compute.sharedMemoryMaxSize = 64 * 1024;
+        m_Desc.shaderStage.compute.dispatchMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.dispatchMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.sharedMemoryMaxSize = (uint32_t)(-1);
+
+        m_Desc.shaderStage.task.dispatchWorkGroupMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupInvocationMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.sharedMemoryMaxSize = (uint32_t)(-1);
+        m_Desc.shaderStage.task.payloadMaxSize = (uint32_t)(-1);
+
+        m_Desc.shaderStage.mesh.dispatchWorkGroupMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.sharedMemoryMaxSize = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.outputVerticesMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.outputComponentMaxNum = (uint32_t)(-1);
 
         m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = 32;
-        m_Desc.shaderStage.rayTracing.tableMaxStride = (uint32_t)(-1);
+        m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = (uint32_t)(-1);
         m_Desc.shaderStage.rayTracing.recursionMaxDepth = 31;
 
-        m_Desc.shaderStage.meshControl.sharedMemoryMaxSize = 64 * 1024;
-        m_Desc.shaderStage.meshControl.workGroupInvocationMaxNum = 128;
-        m_Desc.shaderStage.meshControl.payloadMaxSize = 64 * 1024;
-
-        m_Desc.shaderStage.meshEvaluation.outputVerticesMaxNum = 256;
-        m_Desc.shaderStage.meshEvaluation.outputPrimitiveMaxNum = 256;
-        m_Desc.shaderStage.meshEvaluation.outputComponentMaxNum = 128;
-        m_Desc.shaderStage.meshEvaluation.sharedMemoryMaxSize = 64 * 1024;
-        m_Desc.shaderStage.meshEvaluation.workGroupInvocationMaxNum = 128;
+        m_Desc.accelerationStructure.primitiveMaxNum = (uint32_t)(-1);
+        m_Desc.accelerationStructure.geometryMaxNum = (uint32_t)(-1);
+        m_Desc.accelerationStructure.instanceMaxNum = (uint32_t)(-1);
+        m_Desc.accelerationStructure.micromapSubdivisionMaxLevel = 12;
 
         m_Desc.wave.laneMinNum = 32;
         m_Desc.wave.laneMaxNum = 32;
@@ -140,7 +159,6 @@ struct DeviceNONE final : public DeviceBase {
         m_Desc.wave.quadOpsStages = StageBits::ALL_SHADERS;
 
         m_Desc.other.timestampFrequencyHz = 1;
-        m_Desc.other.micromapSubdivisionMaxLevel = 12;
         m_Desc.other.drawIndirectMaxNum = uint32_t(-1);
         m_Desc.other.samplerLodBiasMax = 16.0f;
         m_Desc.other.samplerAnisotropyMax = 16;
@@ -295,19 +313,7 @@ static Result NRI_CALL CreateBufferView(const BufferViewDesc&, Descriptor*& buff
     return Result::SUCCESS;
 }
 
-static Result NRI_CALL CreateTexture1DView(const Texture1DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture2DView(const Texture2DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture3DView(const Texture3DViewDesc&, Descriptor*& textureView) {
+static Result NRI_CALL CreateTextureView(const TextureViewDesc&, Descriptor*& textureView) {
     textureView = DummyObject<Descriptor>();
 
     return Result::SUCCESS;
@@ -647,9 +653,7 @@ Result DeviceNONE::FillFunctionTable(CoreInterface& table) const {
     table.CreateCommandBuffer = ::CreateCommandBuffer;
     table.CreateDescriptorPool = ::CreateDescriptorPool;
     table.CreateBufferView = ::CreateBufferView;
-    table.CreateTexture1DView = ::CreateTexture1DView;
-    table.CreateTexture2DView = ::CreateTexture2DView;
-    table.CreateTexture3DView = ::CreateTexture3DView;
+    table.CreateTextureView = ::CreateTextureView;
     table.CreateSampler = ::CreateSampler;
     table.CreatePipelineLayout = ::CreatePipelineLayout;
     table.CreateGraphicsPipeline = ::CreateGraphicsPipeline;

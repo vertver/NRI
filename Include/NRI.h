@@ -38,8 +38,8 @@ Implicit:
 
 #pragma once
 
-#define NRI_VERSION 178
-#define NRI_VERSION_DATE "12 February 2026"
+#define NRI_VERSION 179
+#define NRI_VERSION_DATE "27 February 2026"
 
 // C/C++ compatible interface (auto-selection or via "NRI_FORCE_C" macro)
 #include "NRIDescs.h"
@@ -87,9 +87,7 @@ NriStruct(CoreInterface) {
     Nri(Result)         (NRI_CALL *CreateQueryPool)                 (NriRef(Device) device, const NriRef(QueryPoolDesc) queryPoolDesc, NriOut NriRef(QueryPool*) queryPool);
     Nri(Result)         (NRI_CALL *CreateSampler)                   (NriRef(Device) device, const NriRef(SamplerDesc) samplerDesc, NriOut NriRef(Descriptor*) sampler);
     Nri(Result)         (NRI_CALL *CreateBufferView)                (const NriRef(BufferViewDesc) bufferViewDesc, NriOut NriRef(Descriptor*) bufferView);
-    Nri(Result)         (NRI_CALL *CreateTexture1DView)             (const NriRef(Texture1DViewDesc) textureViewDesc, NriOut NriRef(Descriptor*) textureView);
-    Nri(Result)         (NRI_CALL *CreateTexture2DView)             (const NriRef(Texture2DViewDesc) textureViewDesc, NriOut NriRef(Descriptor*) textureView);
-    Nri(Result)         (NRI_CALL *CreateTexture3DView)             (const NriRef(Texture3DViewDesc) textureViewDesc, NriOut NriRef(Descriptor*) textureView);
+    Nri(Result)         (NRI_CALL *CreateTextureView)               (const NriRef(TextureViewDesc) textureViewDesc, NriOut NriRef(Descriptor*) textureView);
 
     // Destroy
     void                (NRI_CALL *DestroyCommandAllocator)         (NriPtr(CommandAllocator) commandAllocator);

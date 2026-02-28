@@ -143,9 +143,7 @@ struct DeviceVal final : public DeviceBase {
     Result CreateSwapChain(const SwapChainDesc& swapChainDesc, SwapChain*& swapChain);
     Result CreateDescriptor(const SamplerDesc& samplerDesc, Descriptor*& sampler);
     Result CreateDescriptor(const BufferViewDesc& bufferViewDesc, Descriptor*& bufferView);
-    Result CreateDescriptor(const Texture1DViewDesc& textureViewDesc, Descriptor*& textureView);
-    Result CreateDescriptor(const Texture2DViewDesc& textureViewDesc, Descriptor*& textureView);
-    Result CreateDescriptor(const Texture3DViewDesc& textureViewDesc, Descriptor*& textureView);
+    Result CreateDescriptor(const TextureViewDesc& textureViewDesc, Descriptor*& textureView);
     Result CreateCommandBuffer(const CommandBufferVKDesc& commandBufferVKDesc, CommandBuffer*& commandBuffer);
     Result CreateCommandBuffer(const CommandBufferD3D11Desc& commandBufferD3D11Desc, CommandBuffer*& commandBuffer);
     Result CreateCommandBuffer(const CommandBufferD3D12Desc& commandBufferD3D12Desc, CommandBuffer*& commandBuffer);

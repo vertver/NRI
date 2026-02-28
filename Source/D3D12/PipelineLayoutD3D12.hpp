@@ -340,5 +340,5 @@ void PipelineLayoutD3D12::SetRootDescriptor(ID3D12GraphicsCommandList* graphicsC
         else
             graphicsCommandList->SetComputeRootUnorderedAccessView(rootParameterIndex, bufferLocation);
     } else
-        NRI_CHECK(false, "Unexpected");
+        NRI_CHECK(false, "Unexpected 'descriptorType'");
 }

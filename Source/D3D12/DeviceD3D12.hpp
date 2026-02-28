@@ -3,6 +3,7 @@
 static HRESULT QueryLatestInterface(ComPtr<ID3D12DeviceBest>& in, ComPtr<ID3D12DeviceBest>& out, uint8_t& version) {
     static const IID versions[] = {
 #if NRI_ENABLE_AGILITY_SDK_SUPPORT
+        __uuidof(ID3D12Device15),
         __uuidof(ID3D12Device14),
         __uuidof(ID3D12Device13),
         __uuidof(ID3D12Device12),
@@ -560,6 +561,13 @@ void DeviceD3D12::FillDesc(bool disableD3D12EnhancedBarrier) {
     hr = m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &options21, sizeof(options21));
     if (FAILED(hr))
         NRI_REPORT_WARNING(this, "ID3D12Device::CheckFeatureSupport(options21) failed, result = 0x%08X!", hr);
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS22 options22 = {};
+    hr = m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS22, &options22, sizeof(options22));
+    if (FAILED(hr))
+        NRI_REPORT_WARNING(this, "ID3D12Device::CheckFeatureSupport(options22) failed, result = 0x%08X!", hr);
+    m_Desc.shaderStage.compute.dispatchMaxDim[0] = options22.Max1DDispatchSize;
+    m_Desc.shaderStage.task.dispatchMaxDim[0] = options22.Max1DDispatchMeshSize;
 #else
     m_Desc.memoryAlignment.uploadBufferTextureRow = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
     m_Desc.memoryAlignment.uploadBufferTextureSlice = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
@@ -721,28 +729,50 @@ void DeviceD3D12::FillDesc(bool disableD3D12EnhancedBarrier) {
     m_Desc.shaderStage.fragment.attachmentMaxNum = D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
     m_Desc.shaderStage.fragment.dualSourceAttachmentMaxNum = 1;
 
-    m_Desc.shaderStage.compute.workGroupMaxNum[0] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
-    m_Desc.shaderStage.compute.workGroupMaxNum[1] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
-    m_Desc.shaderStage.compute.workGroupMaxNum[2] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.compute.dispatchMaxDim[0] = std::max(m_Desc.shaderStage.compute.dispatchMaxDim[0], (uint32_t)D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
+    m_Desc.shaderStage.compute.dispatchMaxDim[1] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.compute.dispatchMaxDim[2] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.compute.workGroupInvocationMaxNum = D3D12_CS_THREAD_GROUP_MAX_THREADS_PER_GROUP;
     m_Desc.shaderStage.compute.workGroupMaxDim[0] = D3D12_CS_THREAD_GROUP_MAX_X;
     m_Desc.shaderStage.compute.workGroupMaxDim[1] = D3D12_CS_THREAD_GROUP_MAX_Y;
     m_Desc.shaderStage.compute.workGroupMaxDim[2] = D3D12_CS_THREAD_GROUP_MAX_Z;
-    m_Desc.shaderStage.compute.workGroupInvocationMaxNum = D3D12_CS_THREAD_GROUP_MAX_THREADS_PER_GROUP;
     m_Desc.shaderStage.compute.sharedMemoryMaxSize = D3D12_CS_THREAD_LOCAL_TEMP_REGISTER_POOL;
 
+    // https://microsoft.github.io/DirectX-Specs/d3d/MeshShader.html#dispatchmesh-api
+    m_Desc.shaderStage.task.dispatchWorkGroupMaxNum = D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID;
+    m_Desc.shaderStage.task.dispatchMaxDim[0] = std::max(m_Desc.shaderStage.task.dispatchMaxDim[0], (uint32_t)D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
+    m_Desc.shaderStage.task.dispatchMaxDim[1] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.task.dispatchMaxDim[2] = D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION;
+    m_Desc.shaderStage.task.workGroupInvocationMaxNum = 128;
+    m_Desc.shaderStage.task.workGroupMaxDim[0] = 128;
+    m_Desc.shaderStage.task.workGroupMaxDim[1] = 128;
+    m_Desc.shaderStage.task.workGroupMaxDim[2] = 128;
+    m_Desc.shaderStage.task.sharedMemoryMaxSize = D3D12_AS_TGSM_BYTES_MINIMUM_SUPPORT;
+    m_Desc.shaderStage.task.payloadMaxSize = 16 * 1024;
+
+    m_Desc.shaderStage.mesh.dispatchWorkGroupMaxNum = D3D12_MS_DISPATCH_MAX_THREAD_GROUPS_PER_GRID;
+    m_Desc.shaderStage.mesh.dispatchMaxDim[0] = m_Desc.shaderStage.task.dispatchMaxDim[0];
+    m_Desc.shaderStage.mesh.dispatchMaxDim[1] = m_Desc.shaderStage.task.dispatchMaxDim[1];
+    m_Desc.shaderStage.mesh.dispatchMaxDim[2] = m_Desc.shaderStage.task.dispatchMaxDim[2];
+    m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = 128;
+    m_Desc.shaderStage.mesh.workGroupMaxDim[0] = 128;
+    m_Desc.shaderStage.mesh.workGroupMaxDim[1] = 128;
+    m_Desc.shaderStage.mesh.workGroupMaxDim[2] = 128;
+    m_Desc.shaderStage.mesh.sharedMemoryMaxSize = D3D12_MS_TGSM_BYTES_MINIMUM_SUPPORT;
+    m_Desc.shaderStage.mesh.outputVerticesMaxNum = 256;
+    m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = 256;
+    m_Desc.shaderStage.mesh.outputComponentMaxNum = 128;
+
     m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-    m_Desc.shaderStage.rayTracing.tableMaxStride = D3D12_RAYTRACING_MAX_SHADER_RECORD_STRIDE;
+    m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = D3D12_RAYTRACING_MAX_SHADER_RECORD_STRIDE;
     m_Desc.shaderStage.rayTracing.recursionMaxDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
 
-    m_Desc.shaderStage.meshControl.sharedMemoryMaxSize = 32 * 1024;
-    m_Desc.shaderStage.meshControl.workGroupInvocationMaxNum = 128;
-    m_Desc.shaderStage.meshControl.payloadMaxSize = 16 * 1024;
-
-    m_Desc.shaderStage.meshEvaluation.outputVerticesMaxNum = 256;
-    m_Desc.shaderStage.meshEvaluation.outputPrimitiveMaxNum = 256;
-    m_Desc.shaderStage.meshEvaluation.outputComponentMaxNum = 128;
-    m_Desc.shaderStage.meshEvaluation.sharedMemoryMaxSize = 28 * 1024;
-    m_Desc.shaderStage.meshEvaluation.workGroupInvocationMaxNum = 128;
+    m_Desc.accelerationStructure.primitiveMaxNum = D3D12_RAYTRACING_MAX_PRIMITIVES_PER_BOTTOM_LEVEL_ACCELERATION_STRUCTURE;
+    m_Desc.accelerationStructure.geometryMaxNum = D3D12_RAYTRACING_MAX_GEOMETRIES_PER_BOTTOM_LEVEL_ACCELERATION_STRUCTURE;
+    m_Desc.accelerationStructure.instanceMaxNum = D3D12_RAYTRACING_MAX_INSTANCES_PER_TOP_LEVEL_ACCELERATION_STRUCTURE;
+#ifdef NRI_D3D12_HAS_OPACITY_MICROMAP
+    m_Desc.accelerationStructure.micromapSubdivisionMaxLevel = D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL;
+#endif
 
     m_Desc.wave.laneMinNum = options1.WaveLaneCountMin;
     m_Desc.wave.laneMaxNum = options1.WaveLaneCountMax;
@@ -762,9 +792,6 @@ void DeviceD3D12::FillDesc(bool disableD3D12EnhancedBarrier) {
     }
 
     m_Desc.other.timestampFrequencyHz = timestampFrequency;
-#ifdef NRI_D3D12_HAS_OPACITY_MICROMAP
-    m_Desc.other.micromapSubdivisionMaxLevel = D3D12_RAYTRACING_OPACITY_MICROMAP_OC1_MAX_SUBDIVISION_LEVEL;
-#endif
     m_Desc.other.drawIndirectMaxNum = (1ull << D3D12_REQ_DRAWINDEXED_INDEX_COUNT_2_TO_EXP) - 1;
     m_Desc.other.samplerLodBiasMax = D3D12_MIP_LOD_BIAS_MAX;
     m_Desc.other.samplerAnisotropyMax = D3D12_DEFAULT_MAX_ANISOTROPY;
@@ -805,8 +832,8 @@ void DeviceD3D12::FillDesc(bool disableD3D12EnhancedBarrier) {
     m_Desc.features.flexibleMultiview = options3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
     m_Desc.features.layerBasedMultiview = options3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
     m_Desc.features.viewportBasedMultiview = options3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
-    m_Desc.features.waitableSwapChain = true; // TODO: swap chain version >= 2?
-    m_Desc.features.resizableSwapChain = true;
+    m_Desc.features.waitableSwapChain = m_Desc.features.swapChain; // TODO: swap chain version >= 2?
+    m_Desc.features.resizableSwapChain = m_Desc.features.swapChain;
     m_Desc.features.pipelineStatistics = true;
     m_Desc.features.rootConstantsOffset = true;
     m_Desc.features.nonConstantBufferRootDescriptorOffset = true;
@@ -1062,6 +1089,128 @@ void DeviceD3D12::GetResourceDesc(const BufferDesc& bufferDesc, D3D12_RESOURCE_D
 #endif
 }
 
+static inline bool CanUseSmallAlignment(const D3D12_RESOURCE_DESC& desc, const FormatProps& formatProps) {
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc#alignment
+    // WTF, MS? You never explained the hidden logic behind "small alignment" assuming "GetResourceAllocationInfo" usage, which just
+    // throws a debug error, if a user wants to check the support. And the error is what we want to avoid! Thanks for the "chicken-egg" problem!
+
+    // Global restrictions
+    if (desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+        return false;
+
+    // Tile dims
+    uint32_t tW = 1;
+    uint32_t tH = 1;
+    uint32_t tD = 1;
+
+    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) {
+        // 3D standard swizzle (4KB tiles)
+        switch (formatProps.stride) {
+            case 1:
+                tW = 16;
+                tH = 16;
+                tD = 16;
+                break;
+            case 2:
+                tW = 16;
+                tH = 16;
+                tD = 8;
+                break;
+            case 4:
+                tW = 16;
+                tH = 8;
+                tD = 8;
+                break;
+            case 8:
+                tW = 8;
+                tH = 8;
+                tD = 8;
+                break;
+            case 16:
+                tW = 8;
+                tH = 8;
+                tD = 4;
+                break;
+            default:
+                return false;
+        }
+    } else if (desc.SampleDesc.Count > 1) {
+        // 2D MSAA standard swizzle (64KB tiles)
+        switch (formatProps.stride) {
+            case 1:
+                tW = 256;
+                tH = 256;
+                break;
+            case 2:
+                tW = 256;
+                tH = 128;
+                break;
+            case 4:
+                tW = 128;
+                tH = 128;
+                break;
+            case 8:
+                tW = 128;
+                tH = 64;
+                break;
+            case 16:
+                tW = 64;
+                tH = 64;
+                break;
+            default:
+                return false;
+        }
+    } else {
+        // 1D and 2D standard swizzle (4KB tiles)
+        if (formatProps.isCompressed) {
+            tW = formatProps.stride == 8 ? 128 : 64;
+            tH = 64;
+        } else {
+            switch (formatProps.stride) {
+                case 1:
+                    tW = 64;
+                    tH = 64;
+                    break;
+                case 2:
+                    tW = 64;
+                    tH = 32;
+                    break;
+                case 4:
+                    tW = 32;
+                    tH = 32;
+                    break;
+                case 8:
+                    tW = 32;
+                    tH = 16;
+                    break;
+                case 16:
+                    tW = 16;
+                    tH = 16;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
+        // For 1D textures, the height is effectively 1 texel, but the tile "shape" remains the same for the width calculation
+        if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+            tH = 1;
+    }
+
+    // Calculate grid
+    uint32_t tilesX = ((uint32_t)desc.Width + tW - 1) / tW;
+    uint32_t tilesY = (desc.Height + tH - 1) / tH;
+    uint32_t tilesZ = desc.DepthOrArraySize;
+
+    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+        tilesZ = (desc.DepthOrArraySize + tD - 1) / tD;
+
+    // Must fit in 16 tiles
+    uint32_t totalTiles = tilesX * tilesY * tilesZ;
+
+    return totalTiles <= 16;
+}
+
 void DeviceD3D12::GetResourceDesc(const TextureDesc& textureDesc, D3D12_RESOURCE_DESC& desc) const {
     const FormatProps& formatProps = GetFormatProps(textureDesc.format);
     const DxgiFormat& dxgiFormat = GetDxgiFormat(textureDesc.format);
@@ -1086,20 +1235,9 @@ void DeviceD3D12::GetResourceDesc(const TextureDesc& textureDesc, D3D12_RESOURCE
         desc.Flags |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
     else
 #endif
-    { // "Small resource" alignment
-        bool isRTorDS = desc.Flags & (D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-        if (!isRTorDS) {
-            uint64_t mip0size = desc.Width * desc.Height;
-            mip0size *= desc.DepthOrArraySize;
-            mip0size *= formatProps.stride;
-            mip0size /= formatProps.blockWidth;
-            mip0size /= formatProps.blockHeight;
-
-            if (mip0size <= 64 * 1024) {
-                bool isMSAA = desc.SampleDesc.Count > 1;
-                desc.Alignment = isMSAA ? D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
-            }
-        }
+    {
+        if (CanUseSmallAlignment(desc, formatProps))
+            desc.Alignment = desc.SampleDesc.Count > 1 ? D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
     }
 }
 

@@ -7,8 +7,8 @@ struct ID3D12DescriptorHeap;
 struct ID3D12CommandSignature;
 
 #if NRI_ENABLE_AGILITY_SDK_SUPPORT
-struct ID3D12Device14;
-typedef ID3D12Device14 ID3D12DeviceBest;
+struct ID3D12Device15;
+typedef ID3D12Device15 ID3D12DeviceBest;
 #else
 struct ID3D12Device5;
 typedef ID3D12Device5 ID3D12DeviceBest;

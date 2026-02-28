@@ -218,7 +218,7 @@ Result SwapChainVK::Create(const SwapChainDesc& swapChainDesc) {
                 });
                 break;
             default:
-                NRI_CHECK(false, "Unexpected");
+                NRI_CHECK(false, "Unexpected 'swapChainDesc.format'");
                 break;
         }
 

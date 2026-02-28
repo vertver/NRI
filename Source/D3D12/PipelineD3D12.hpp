@@ -444,7 +444,7 @@ Result PipelineD3D12::Create(const RayTracingPipelineDesc& rayTracingPipelineDes
                         hitGroups[hitGroupNum].AnyHitShaderImport = entryPointName.c_str();
                         break;
                     default:
-                        NRI_CHECK(false, "Unexpected");
+                        NRI_CHECK(false, "Unexpected 'shader.stage'");
                         break;
                 }
 

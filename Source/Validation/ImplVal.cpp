@@ -122,19 +122,7 @@ static Result NRI_CALL CreateBufferView(const BufferViewDesc& bufferViewDesc, De
     return device.CreateDescriptor(bufferViewDesc, bufferView);
 }
 
-static Result NRI_CALL CreateTexture1DView(const Texture1DViewDesc& textureViewDesc, Descriptor*& textureView) {
-    DeviceVal& device = GetDeviceVal(*textureViewDesc.texture);
-
-    return device.CreateDescriptor(textureViewDesc, textureView);
-}
-
-static Result NRI_CALL CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, Descriptor*& textureView) {
-    DeviceVal& device = GetDeviceVal(*textureViewDesc.texture);
-
-    return device.CreateDescriptor(textureViewDesc, textureView);
-}
-
-static Result NRI_CALL CreateTexture3DView(const Texture3DViewDesc& textureViewDesc, Descriptor*& textureView) {
+static Result NRI_CALL CreateTextureView(const TextureViewDesc& textureViewDesc, Descriptor*& textureView) {
     DeviceVal& device = GetDeviceVal(*textureViewDesc.texture);
 
     return device.CreateDescriptor(textureViewDesc, textureView);
@@ -597,9 +585,7 @@ Result DeviceVal::FillFunctionTable(CoreInterface& table) const {
     table.CreateCommandBuffer = ::CreateCommandBuffer;
     table.CreateDescriptorPool = ::CreateDescriptorPool;
     table.CreateBufferView = ::CreateBufferView;
-    table.CreateTexture1DView = ::CreateTexture1DView;
-    table.CreateTexture2DView = ::CreateTexture2DView;
-    table.CreateTexture3DView = ::CreateTexture3DView;
+    table.CreateTextureView = ::CreateTextureView;
     table.CreateSampler = ::CreateSampler;
     table.CreatePipelineLayout = ::CreatePipelineLayout;
     table.CreateGraphicsPipeline = ::CreateGraphicsPipeline;

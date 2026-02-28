@@ -270,7 +270,7 @@ NRI_INLINE void CommandBufferVK::ClearStorage(const ClearStorageDesc& clearStora
             vk.CmdFillBuffer(m_Handle, descriptorBufferInfo.buffer, descriptorBufferInfo.offset, descriptorBufferInfo.range, clearStorageDesc.value.ui.x);
         } break;
         default:
-            NRI_CHECK(false, "Unexpected");
+            NRI_CHECK(false, "Unexpected 'descriptorType'");
             break;
     }
 }
@@ -533,7 +533,7 @@ NRI_INLINE void CommandBufferVK::SetRootDescriptor(const SetRootDescriptorDesc& 
             descriptorWrite.pNext = &accelerationStructureWrite;
             break;
         default:
-            NRI_CHECK(false, "Unexpected");
+            NRI_CHECK(false, "Unexpected 'descriptorType'");
             break;
     }
 

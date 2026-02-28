@@ -229,7 +229,7 @@ NRI_INLINE void CommandBufferD3D11::ClearAttachments(const ClearAttachmentDesc* 
                     color[0] = clearAttachmentDesc.value.depthStencil.depth;
                     m_DeferredContext->ClearView(m_DepthStencil, color, rectsD3D, rectNum);
                 } else
-                    NRI_CHECK(false, "Bad or unsupported plane");
+                    NRI_CHECK(false, "Unexpected 'clearAttachmentDesc.planes'");
             }
         } else
             NRI_CHECK(false, "'ClearView' emulation for 11.0 is not implemented!");
