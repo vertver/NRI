@@ -91,6 +91,7 @@ foreach(opt IN ITEMS
     NRI_ENABLE_DEBUG_NAMES_AND_ANNOTATIONS
     NRI_ENABLE_NONE_SUPPORT
     NRI_ENABLE_VK_SUPPORT
+    NRI_ENABLE_WEBGPU_SUPPORT
     NRI_ENABLE_VALIDATION_SUPPORT
     NRI_ENABLE_NIS_SDK
     NRI_ENABLE_IMGUI_EXTENSION
@@ -380,7 +381,7 @@ target_include_directories(NRI_Shared
             ${vulkan_headers_SOURCE_DIR}/include
         >
         $<$<BOOL:${NRI_ENABLE_WEBGPU_SUPPORT}>:
-            ${webgpu_headers_SOURCE_DIR}/include
+            ${webgpu_headers_SOURCE_DIR}
         >
         $<$<BOOL:${NRI_ENABLE_NGX_SDK}>:
             ${ngx_SOURCE_DIR}/include
@@ -778,7 +779,7 @@ if(NRI_ENABLE_WEBGPU_SUPPORT)
     target_sources(NRI_WEBGPU PRIVATE ${WEBGPU_SOURCE})
     target_include_directories(NRI_WEBGPU
         PRIVATE
-            "${webgpu_headers_SOURCE_DIR}/include"
+            "${webgpu_headers_SOURCE_DIR}"
     )
     target_link_libraries(NRI_WEBGPU
         PRIVATE
@@ -928,6 +929,7 @@ target_include_directories(NRI
     PRIVATE
         "${nvtx_SOURCE_DIR}/c/include/"
         "${vulkan_headers_SOURCE_DIR}/include"
+        "${webgpu_headers_SOURCE_DIR}"
     PUBLIC
         "Include"
 )

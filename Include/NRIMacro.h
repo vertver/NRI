@@ -187,6 +187,7 @@
     #define NriUnion(name) union name
     #define NriMember(name, member) member
     #define NonNriForwardStruct(name) struct name
+    #define NonNriForwardStructPtr(name) typedef struct name##Impl* name
 
     #define _NRI_ENUM_ENTRY(index, ...) NRI_VA_ARGS_AT(index, __VA_ARGS__)
     #define _NRI_ENUM_EXPAND(...) NRI_SEQN(_NRI_ENUM_ENTRY, NRI_NARGS(__VA_ARGS__), __VA_ARGS__)
@@ -224,6 +225,7 @@
     #define NriUnion(name) typedef union Nri(name) Nri(name); union Nri(name)
     #define NriMember(name, member) NRI_MERGE_TOKENS(NRI_NAME_(name), member)
     #define NonNriForwardStruct(name) typedef struct name name
+    #define NonNriForwardStructPtr(name) typedef struct name##Impl* name
 
     #define NRI_NAME_(name) NRI_MERGE_TOKENS(Nri(name), _)
     #define _NRI_ENUM_ENTRY(index, prefix, ...) NRI_MERGE_TOKENS(prefix, NRI_VA_ARGS_AT(index, __VA_ARGS__))

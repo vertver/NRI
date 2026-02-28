@@ -2,6 +2,8 @@
 
 #include "SharedExternal.h"
 
+#include <webgpu.h>
+
 using namespace nri;
 
 template <typename T>
@@ -9,20 +11,19 @@ constexpr T* DummyObject() {
     return (T*)(size_t)(1);
 }
 
-struct DeviceWEBGPU final : public DeviceBase {
-    inline DeviceWEBGPU(const CallbackInterface& callbacks, const AllocationCallbacks& allocationCallbacks, const AdapterDesc* adapterDesc)
+struct DeviceWebGPU final : public DeviceBase {
+    inline DeviceWebGPU(const CallbackInterface& callbacks, const AllocationCallbacks& allocationCallbacks, const AdapterDesc* adapterDesc)
         : DeviceBase(callbacks, allocationCallbacks) {
         if (adapterDesc)
             m_Desc.adapterDesc = *adapterDesc;
 
-        for (uint32_t i = 0; i < (uint32_t)QueueType::MAX_NUM; i++)
-            m_Desc.adapterDesc.queueNum[i] = 4;
+        m_Desc.adapterDesc.queueNum[(uint32_t)QueueType::GRAPHICS] = 1;
 
         m_Desc.graphicsAPI = GraphicsAPI::WEBGPU;
         m_Desc.nriVersion = NRI_VERSION;
-        m_Desc.shaderModel = 60;
+        m_Desc.shaderModel = 50;
 
-        m_Desc.viewport.maxNum = 8;
+        m_Desc.viewport.maxNum = 16;
         m_Desc.viewport.boundsMin = -32768;
         m_Desc.viewport.boundsMax = 32767;
 
@@ -39,7 +40,7 @@ struct DeviceWEBGPU final : public DeviceBase {
         m_Desc.precision.subTexelBits = 8;
         m_Desc.precision.mipmapBits = 8;
 
-        m_Desc.memory.deviceUploadHeapSize = 0;
+        m_Desc.memory.deviceUploadHeapSize = 256 * 1024 * 1024;
         m_Desc.memory.allocationMaxNum = uint32_t(-1);
         m_Desc.memory.samplerAllocationMaxNum = 4096;
         m_Desc.memory.constantBufferMaxRange = 64 * 1024;
@@ -110,28 +111,47 @@ struct DeviceWEBGPU final : public DeviceBase {
         m_Desc.shaderStage.fragment.attachmentMaxNum = 8;
         m_Desc.shaderStage.fragment.dualSourceAttachmentMaxNum = 1;
 
-        m_Desc.shaderStage.compute.workGroupMaxNum[0] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxNum[1] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxNum[2] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxDim[0] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxDim[1] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxDim[2] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = 64 * 1024;
-        m_Desc.shaderStage.compute.sharedMemoryMaxSize = 64 * 1024;
+        m_Desc.shaderStage.compute.dispatchMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.dispatchMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupInvocationMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.workGroupMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.compute.sharedMemoryMaxSize = (uint32_t)(-1);
+
+        m_Desc.shaderStage.task.dispatchWorkGroupMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupInvocationMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.workGroupMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.task.sharedMemoryMaxSize = (uint32_t)(-1);
+        m_Desc.shaderStage.task.payloadMaxSize = (uint32_t)(-1);
+
+        m_Desc.shaderStage.mesh.dispatchWorkGroupMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.dispatchMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupMaxDim[0] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupMaxDim[1] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.workGroupMaxDim[2] = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.sharedMemoryMaxSize = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.outputVerticesMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = (uint32_t)(-1);
+        m_Desc.shaderStage.mesh.outputComponentMaxNum = (uint32_t)(-1);
 
         m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = 32;
-        m_Desc.shaderStage.rayTracing.tableMaxStride = (uint32_t)(-1);
+        m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = (uint32_t)(-1);
         m_Desc.shaderStage.rayTracing.recursionMaxDepth = 31;
 
-        m_Desc.shaderStage.meshControl.sharedMemoryMaxSize = 64 * 1024;
-        m_Desc.shaderStage.meshControl.workGroupInvocationMaxNum = 128;
-        m_Desc.shaderStage.meshControl.payloadMaxSize = 64 * 1024;
-
-        m_Desc.shaderStage.meshEvaluation.outputVerticesMaxNum = 256;
-        m_Desc.shaderStage.meshEvaluation.outputPrimitiveMaxNum = 256;
-        m_Desc.shaderStage.meshEvaluation.outputComponentMaxNum = 128;
-        m_Desc.shaderStage.meshEvaluation.sharedMemoryMaxSize = 64 * 1024;
-        m_Desc.shaderStage.meshEvaluation.workGroupInvocationMaxNum = 128;
+        m_Desc.accelerationStructure.primitiveMaxNum = (uint32_t)(-1);
+        m_Desc.accelerationStructure.geometryMaxNum = (uint32_t)(-1);
+        m_Desc.accelerationStructure.instanceMaxNum = (uint32_t)(-1);
+        m_Desc.accelerationStructure.micromapSubdivisionMaxLevel = 12;
 
         m_Desc.wave.laneMinNum = 32;
         m_Desc.wave.laneMaxNum = 32;
@@ -140,7 +160,6 @@ struct DeviceWEBGPU final : public DeviceBase {
         m_Desc.wave.quadOpsStages = StageBits::ALL_SHADERS;
 
         m_Desc.other.timestampFrequencyHz = 1;
-        m_Desc.other.micromapSubdivisionMaxLevel = 12;
         m_Desc.other.drawIndirectMaxNum = uint32_t(-1);
         m_Desc.other.samplerLodBiasMax = 16.0f;
         m_Desc.other.samplerAnisotropyMax = 16;
@@ -159,7 +178,14 @@ struct DeviceWEBGPU final : public DeviceBase {
         memset(&m_Desc.shaderFeatures, 0xFF, sizeof(m_Desc.shaderFeatures));
     }
 
-    inline ~DeviceWEBGPU() {
+    inline ~DeviceWebGPU() {
+    }
+
+    nri::Result Create(const DeviceCreationDesc& desc, const DeviceCreationWebGPUDesc& descWebGPU)
+    {
+        (void)descWebGPU;
+        (void)desc;
+        return nri::Result::SUCCESS;
     }
 
     //================================================================================================================
@@ -191,26 +217,24 @@ private:
     DeviceDesc m_Desc = {};
 };
 
-Result CreateDeviceWebGPU(const DeviceCreationDesc& desc, DeviceBase*& device) {
-    DeviceWEBGPU* impl = Allocate<DeviceWEBGPU>(desc.allocationCallbacks, desc.callbackInterface, desc.allocationCallbacks, desc.adapterDesc);
+Result CreateDeviceWebGPU(const DeviceCreationDesc& desc, const DeviceCreationWebGPUDesc& descWebGPU, DeviceBase*& device) {
+    DeviceWebGPU* impl = Allocate<DeviceWebGPU>(desc.allocationCallbacks, desc.callbackInterface, desc.allocationCallbacks, desc.adapterDesc);
+    Result result = impl->Create(desc, descWebGPU);
 
-    if (!impl) {
+    if (result != Result::SUCCESS) {
         Destroy(desc.allocationCallbacks, impl);
         device = nullptr;
+    } else
+        device = (DeviceBase*)impl;
 
-        return Result::FAILURE;
-    }
-
-    device = (DeviceBase*)impl;
-
-    return Result::SUCCESS;
+    return result;
 }
 
 //============================================================================================================================================================================================
 #pragma region[  Core  ]
 
 static const DeviceDesc& NRI_CALL GetDeviceDesc(const Device& device) {
-    return ((DeviceWEBGPU&)device).GetDesc();
+    return ((DeviceWebGPU&)device).GetDesc();
 }
 
 static const BufferDesc& NRI_CALL GetBufferDesc(const Buffer&) {
@@ -295,19 +319,7 @@ static Result NRI_CALL CreateBufferView(const BufferViewDesc&, Descriptor*& buff
     return Result::SUCCESS;
 }
 
-static Result NRI_CALL CreateTexture1DView(const Texture1DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture2DView(const Texture2DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture3DView(const Texture3DViewDesc&, Descriptor*& textureView) {
+static Result NRI_CALL CreateTextureView(const TextureViewDesc&, Descriptor*& textureView) {
     textureView = DummyObject<Descriptor>();
 
     return Result::SUCCESS;
@@ -634,7 +646,7 @@ static uint64_t NRI_CALL GetDescriptorNativeObject(const Descriptor*) {
     return 0;
 }
 
-Result DeviceWEBGPU::FillFunctionTable(CoreInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(CoreInterface& table) const {
     table.GetDeviceDesc = ::GetDeviceDesc;
     table.GetBufferDesc = ::GetBufferDesc;
     table.GetTextureDesc = ::GetTextureDesc;
@@ -647,9 +659,7 @@ Result DeviceWEBGPU::FillFunctionTable(CoreInterface& table) const {
     table.CreateCommandBuffer = ::CreateCommandBuffer;
     table.CreateDescriptorPool = ::CreateDescriptorPool;
     table.CreateBufferView = ::CreateBufferView;
-    table.CreateTexture1DView = ::CreateTexture1DView;
-    table.CreateTexture2DView = ::CreateTexture2DView;
-    table.CreateTexture3DView = ::CreateTexture3DView;
+    table.CreateTextureView = ::CreateTextureView;
     table.CreateSampler = ::CreateSampler;
     table.CreatePipelineLayout = ::CreatePipelineLayout;
     table.CreateGraphicsPipeline = ::CreateGraphicsPipeline;
@@ -772,7 +782,7 @@ static Result NRI_CALL QueryVideoMemoryInfo(const Device&, MemoryLocation, Video
     return Result::SUCCESS;
 }
 
-Result DeviceWEBGPU::FillFunctionTable(HelperInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(HelperInterface& table) const {
     table.CalculateAllocationNumber = ::CalculateAllocationNumber;
     table.AllocateAndBindMemory = ::AllocateAndBindMemory;
     table.UploadData = ::UploadData;
@@ -803,7 +813,7 @@ static void NRI_CALL CmdCopyImguiData(CommandBuffer&, Streamer&, Imgui&, const C
 static void NRI_CALL CmdDrawImgui(CommandBuffer&, Imgui&, const DrawImguiDesc&) {
 }
 
-Result DeviceNONE::FillFunctionTable(ImguiInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(ImguiInterface& table) const {
     table.CreateImgui = ::CreateImgui;
     table.DestroyImgui = ::DestroyImgui;
     table.CmdCopyImguiData = ::CmdCopyImguiData;
@@ -835,7 +845,7 @@ static Result NRI_CALL GetLatencyReport(const SwapChain&, LatencyReport&) {
     return Result::SUCCESS;
 }
 
-Result DeviceWEBGPU::FillFunctionTable(LowLatencyInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(LowLatencyInterface& table) const {
     table.SetLatencySleepMode = ::SetLatencySleepMode;
     table.SetLatencyMarker = ::SetLatencyMarker;
     table.LatencySleep = ::LatencySleep;
@@ -855,7 +865,7 @@ static void NRI_CALL CmdDrawMeshTasks(CommandBuffer&, const DrawMeshTasksDesc&) 
 static void NRI_CALL CmdDrawMeshTasksIndirect(CommandBuffer&, const Buffer&, uint64_t, uint32_t, uint32_t, const Buffer*, uint64_t) {
 }
 
-Result DeviceWEBGPU::FillFunctionTable(MeshShaderInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(MeshShaderInterface& table) const {
     table.CmdDrawMeshTasks = ::CmdDrawMeshTasks;
     table.CmdDrawMeshTasksIndirect = ::CmdDrawMeshTasksIndirect;
 
@@ -1008,7 +1018,7 @@ static uint64_t NRI_CALL GetMicromapNativeObject(const Micromap*) {
     return 0;
 }
 
-Result DeviceWEBGPU::FillFunctionTable(RayTracingInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(RayTracingInterface& table) const {
     table.CreateRayTracingPipeline = ::CreateRayTracingPipeline;
     table.CreateAccelerationStructureDescriptor = ::CreateAccelerationStructureDescriptor;
     table.GetAccelerationStructureHandle = ::GetAccelerationStructureHandle;
@@ -1083,7 +1093,7 @@ static void NRI_CALL EndStreamerFrame(Streamer&) {
 static void NRI_CALL CmdCopyStreamedData(CommandBuffer&, Streamer&) {
 }
 
-Result DeviceWEBGPU::FillFunctionTable(StreamerInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(StreamerInterface& table) const {
     table.CreateStreamer = ::CreateStreamer;
     table.DestroyStreamer = ::DestroyStreamer;
     table.GetStreamerConstantBuffer = ::GetStreamerConstantBuffer;
@@ -1137,7 +1147,7 @@ static Result NRI_CALL QueuePresent(SwapChain&, Fence&) {
     return Result::SUCCESS;
 }
 
-Result DeviceWEBGPU::FillFunctionTable(SwapChainInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(SwapChainInterface& table) const {
     table.CreateSwapChain = ::CreateSwapChain;
     table.DestroySwapChain = ::DestroySwapChain;
     table.GetSwapChainTextures = ::GetSwapChainTextures;
@@ -1174,7 +1184,7 @@ static void NRI_CALL GetUpscalerProps(const Upscaler&, UpscalerProps& upscalerPr
 static void NRI_CALL CmdDispatchUpscale(CommandBuffer&, Upscaler&, const DispatchUpscaleDesc&) {
 }
 
-Result DeviceWEBGPU::FillFunctionTable(UpscalerInterface& table) const {
+Result DeviceWebGPU::FillFunctionTable(UpscalerInterface& table) const {
     table.CreateUpscaler = ::CreateUpscaler;
     table.DestroyUpscaler = ::DestroyUpscaler;
     table.IsUpscalerSupported = ::IsUpscalerSupported;

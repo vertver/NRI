@@ -39,6 +39,7 @@ typedef uint32_t DXGI_FORMAT;
 #include "Extensions/NRIWrapperD3D11.h"
 #include "Extensions/NRIWrapperD3D12.h"
 #include "Extensions/NRIWrapperVK.h"
+#include "Extensions/NRIWrapperWebGPU.h"
 
 #include "Lock.h"
 

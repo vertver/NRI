@@ -25,6 +25,10 @@
 #    include <vulkan/vulkan.h>
 #endif
 
+#if NRI_ENABLE_WEBGPU_SUPPORT
+#    include <webgpu.h>
+#endif
+
 #include "SharedExternal.h"
 
 #define ADAPTER_MAX_NUM 32
@@ -35,6 +39,7 @@ Result CreateDeviceNONE(const DeviceCreationDesc& deviceCreationDesc, DeviceBase
 Result CreateDeviceD3D11(const DeviceCreationDesc& deviceCreationDesc, const DeviceCreationD3D11Desc& deviceCreationDescD3D11, DeviceBase*& device);
 Result CreateDeviceD3D12(const DeviceCreationDesc& deviceCreationDesc, const DeviceCreationD3D12Desc& deviceCreationDescD3D12, DeviceBase*& device);
 Result CreateDeviceVK(const DeviceCreationDesc& deviceCreationDesc, const DeviceCreationVKDesc& deviceCreationDescVK, DeviceBase*& device);
+Result CreateDeviceWebGPU(const DeviceCreationDesc& desc, const DeviceCreationWebGPUDesc& descWebGPU, DeviceBase*& device);
 DeviceBase* CreateDeviceValidation(const DeviceCreationDesc& deviceCreationDesc, DeviceBase& device);
 
 constexpr uint64_t Hash(const char* name) {
@@ -468,6 +473,18 @@ static Result EnumerateAdaptersVK(AdapterDesc* adapterDescs, uint32_t& adapterDe
 
 #endif
 
+#if NRI_ENABLE_WEBGPU_SUPPORT
+
+static Result EnumerateAdaptersWebGPU(AdapterDesc* adapterDescs, uint32_t& adapterDescNum, uint64_t precreatedDeviceLuid, DeviceCreationDesc* deviceCreationDesc) {
+    nri::Result result = nri::Result::FAILURE;
+   
+
+
+    return result;
+}
+
+#endif
+
 static Result FinalizeDeviceCreation(const DeviceCreationDesc& deviceCreationDesc, DeviceBase& deviceImpl, Device*& device) {
     MaybeUnused(deviceCreationDesc);
 #if NRI_ENABLE_VALIDATION_SUPPORT
@@ -726,6 +743,11 @@ NRI_API Result NRI_CALL nriCreateDevice(const DeviceCreationDesc& deviceCreation
         result = CreateDeviceVK(modifiedDeviceCreationDesc, {}, deviceImpl);
 #endif
 
+#if NRI_ENABLE_WEBGPU_SUPPORT
+    if (modifiedDeviceCreationDesc.graphicsAPI == GraphicsAPI::WEBGPU)
+        result = CreateDeviceWebGPU(modifiedDeviceCreationDesc, {}, deviceImpl);
+#endif
+
     if (result != Result::SUCCESS)
         return result;
 
@@ -955,6 +977,11 @@ NRI_API Result NRI_CALL nriEnumerateAdapters(AdapterDesc* adapterDescs, uint32_t
     // If VK is not available, use D3D
     if (result != Result::SUCCESS)
         result = EnumerateAdaptersD3D(adapterDescs, adapterDescNum, 0, nullptr);
+#endif
+
+#if (NRI_ENABLE_WEBGPU_SUPPORT)
+    if (result != Result::SUCCESS)
+        result = EnumerateAdaptersWebGPU(adapterDescs, adapterDescNum, 0, nullptr);
 #endif
 
 #if NRI_ENABLE_NONE_SUPPORT && !(NRI_ENABLE_D3D11_SUPPORT || NRI_ENABLE_D3D12_SUPPORT || NRI_ENABLE_VK_SUPPORT)
