@@ -25,6 +25,10 @@
 #    include <vulkan/vulkan.h>
 #endif
 
+#if NRI_ENABLE_WEBGPU_SUPPORT
+#    include <webgpu/webgpu.h>
+#endif
+
 #include "SharedExternal.h"
 
 #define ADAPTER_MAX_NUM 32
@@ -142,7 +146,7 @@ static void CheckAndSetDefaultCallbacks(DeviceCreationDesc& deviceCreationDesc) 
     }
 }
 
-#if (NRI_ENABLE_D3D11_SUPPORT || NRI_ENABLE_D3D12_SUPPORT || NRI_ENABLE_VK_SUPPORT)
+#if (NRI_ENABLE_D3D11_SUPPORT || NRI_ENABLE_D3D12_SUPPORT || NRI_ENABLE_VK_SUPPORT || NRI_ENABLE_WEBGPU_SUPPORT)
 
 static int SortAdapters(const void* pa, const void* pb) {
     constexpr uint64_t SHIFT = 60ull;
@@ -465,6 +469,10 @@ static Result EnumerateAdaptersVK(AdapterDesc* adapterDescs, uint32_t& adapterDe
 
     return result;
 }
+
+#endif
+
+#if NRI_ENABLE_WEBGPU_SUPPORT
 
 #endif
 

@@ -20,7 +20,7 @@ struct DeviceWEBGPU final : public DeviceBase {
 
         m_Desc.graphicsAPI = GraphicsAPI::WEBGPU;
         m_Desc.nriVersion = NRI_VERSION;
-        m_Desc.shaderModel = 60;
+        m_Desc.shaderModel = 51;
 
         m_Desc.viewport.maxNum = 8;
         m_Desc.viewport.boundsMin = -32768;
@@ -110,9 +110,6 @@ struct DeviceWEBGPU final : public DeviceBase {
         m_Desc.shaderStage.fragment.attachmentMaxNum = 8;
         m_Desc.shaderStage.fragment.dualSourceAttachmentMaxNum = 1;
 
-        m_Desc.shaderStage.compute.workGroupMaxNum[0] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxNum[1] = 64 * 1024;
-        m_Desc.shaderStage.compute.workGroupMaxNum[2] = 64 * 1024;
         m_Desc.shaderStage.compute.workGroupMaxDim[0] = 64 * 1024;
         m_Desc.shaderStage.compute.workGroupMaxDim[1] = 64 * 1024;
         m_Desc.shaderStage.compute.workGroupMaxDim[2] = 64 * 1024;
@@ -120,18 +117,16 @@ struct DeviceWEBGPU final : public DeviceBase {
         m_Desc.shaderStage.compute.sharedMemoryMaxSize = 64 * 1024;
 
         m_Desc.shaderStage.rayTracing.shaderGroupIdentifierSize = 32;
-        m_Desc.shaderStage.rayTracing.tableMaxStride = (uint32_t)(-1);
+        m_Desc.shaderStage.rayTracing.shaderBindingTableMaxStride = (uint32_t)(-1);
         m_Desc.shaderStage.rayTracing.recursionMaxDepth = 31;
 
-        m_Desc.shaderStage.meshControl.sharedMemoryMaxSize = 64 * 1024;
-        m_Desc.shaderStage.meshControl.workGroupInvocationMaxNum = 128;
-        m_Desc.shaderStage.meshControl.payloadMaxSize = 64 * 1024;
-
-        m_Desc.shaderStage.meshEvaluation.outputVerticesMaxNum = 256;
-        m_Desc.shaderStage.meshEvaluation.outputPrimitiveMaxNum = 256;
-        m_Desc.shaderStage.meshEvaluation.outputComponentMaxNum = 128;
-        m_Desc.shaderStage.meshEvaluation.sharedMemoryMaxSize = 64 * 1024;
-        m_Desc.shaderStage.meshEvaluation.workGroupInvocationMaxNum = 128;
+        m_Desc.shaderStage.mesh.sharedMemoryMaxSize = 64 * 1024;
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = 128;
+        m_Desc.shaderStage.mesh.outputVerticesMaxNum = 256;
+        m_Desc.shaderStage.mesh.outputPrimitiveMaxNum = 256;
+        m_Desc.shaderStage.mesh.outputComponentMaxNum = 128;
+        m_Desc.shaderStage.mesh.sharedMemoryMaxSize = 64 * 1024;
+        m_Desc.shaderStage.mesh.workGroupInvocationMaxNum = 128;
 
         m_Desc.wave.laneMinNum = 32;
         m_Desc.wave.laneMaxNum = 32;
@@ -140,7 +135,6 @@ struct DeviceWEBGPU final : public DeviceBase {
         m_Desc.wave.quadOpsStages = StageBits::ALL_SHADERS;
 
         m_Desc.other.timestampFrequencyHz = 1;
-        m_Desc.other.micromapSubdivisionMaxLevel = 12;
         m_Desc.other.drawIndirectMaxNum = uint32_t(-1);
         m_Desc.other.samplerLodBiasMax = 16.0f;
         m_Desc.other.samplerAnisotropyMax = 16;
@@ -295,19 +289,7 @@ static Result NRI_CALL CreateBufferView(const BufferViewDesc&, Descriptor*& buff
     return Result::SUCCESS;
 }
 
-static Result NRI_CALL CreateTexture1DView(const Texture1DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture2DView(const Texture2DViewDesc&, Descriptor*& textureView) {
-    textureView = DummyObject<Descriptor>();
-
-    return Result::SUCCESS;
-}
-
-static Result NRI_CALL CreateTexture3DView(const Texture3DViewDesc&, Descriptor*& textureView) {
+static Result NRI_CALL CreateTextureView(const TextureViewDesc&, Descriptor*& textureView) {
     textureView = DummyObject<Descriptor>();
 
     return Result::SUCCESS;
@@ -647,9 +629,7 @@ Result DeviceWEBGPU::FillFunctionTable(CoreInterface& table) const {
     table.CreateCommandBuffer = ::CreateCommandBuffer;
     table.CreateDescriptorPool = ::CreateDescriptorPool;
     table.CreateBufferView = ::CreateBufferView;
-    table.CreateTexture1DView = ::CreateTexture1DView;
-    table.CreateTexture2DView = ::CreateTexture2DView;
-    table.CreateTexture3DView = ::CreateTexture3DView;
+    table.CreateTextureView = ::CreateTextureView;
     table.CreateSampler = ::CreateSampler;
     table.CreatePipelineLayout = ::CreatePipelineLayout;
     table.CreateGraphicsPipeline = ::CreateGraphicsPipeline;
